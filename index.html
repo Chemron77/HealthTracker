@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" id="theme-color-meta" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Health Tracker">
+<meta name="description" content="Track BP, sugar, weight, thyroid and more across multiple profiles.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<title>Health Tracker</title>
+<style>
+:root{
+  --bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#242424;--bg4:#2e2e2e;
+  --fg:#f0f0f0;--fg2:#a0a0a0;--fg3:#606060;
+  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.14);
+  --accent:#3b82f6;--accent2:#1d4ed8;--on-accent:#fff;
+  --success:#22c55e;--warn:#f59e0b;--danger:#ef4444;
+  --bg-success:rgba(34,197,94,0.12);--fg-success:#22c55e;
+  --bg-warn:rgba(245,158,11,0.12);--fg-warn:#f59e0b;
+  --bg-danger:rgba(239,68,68,0.12);--fg-danger:#ef4444;
+  --radius:10px;--safe-b:env(safe-area-inset-bottom,0px)
+}
+.light{
+  --bg:#f5f5f4;--bg2:#ffffff;--bg3:#ebebea;--bg4:#dededc;
+  --fg:#111110;--fg2:#555552;--fg3:#999994;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.14);
+  --accent:#2563eb;--accent2:#1e40af;
+  --bg-success:rgba(21,128,61,0.1);--fg-success:#15803d;
+  --bg-warn:rgba(161,98,7,0.1);--fg-warn:#a16207;
+  --bg-danger:rgba(185,28,28,0.1);--fg-danger:#b91c1c
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--fg);display:flex;flex-direction:column;max-width:430px;margin:0 auto}
+.topbar{
+  display:flex;align-items:center;padding:12px 14px;
+  background:var(--bg2);border-bottom:0.5px solid var(--border);
+  flex-shrink:0;position:relative;
+  padding-top:calc(12px + env(safe-area-inset-top,0px))
+}
+.tb-left{display:flex;align-items:center}
+.profile-pill{display:flex;align-items:center;gap:5px;padding:5px 10px 5px 5px;background:var(--bg3);border:0.5px solid var(--border);border-radius:20px;cursor:pointer;user-select:none}
+.pav{width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff;flex-shrink:0}
+.pname{font-size:12px;font-weight:500;color:var(--fg)}
+.chev{font-size:10px;color:var(--fg3);margin-left:2px}
+.tb-center{position:absolute;left:50%;transform:translateX(-50%);font-size:15px;font-weight:600;color:var(--fg);letter-spacing:-0.2px;pointer-events:none;white-space:nowrap}
+.tb-right{margin-left:auto}
+.ibtn{width:34px;height:34px;border:none;background:transparent;color:var(--fg2);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);font-size:20px}
+.ibtn:active{background:var(--bg3)}
+.page{flex:1;overflow-y:auto;padding:12px 14px 12px;-webkit-overflow-scrolling:touch}
+.slabel{font-size:11px;color:var(--fg3);font-weight:600;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase}
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.mc{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:13px 13px 11px;cursor:pointer;transition:border-color 0.15s;user-select:none}
+.mc:active{border-color:var(--border2)}
+.mc-lbl{font-size:11px;color:var(--fg2);margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.mc-lbl svg{flex-shrink:0}
+.mc-val{font-size:22px;font-weight:600;line-height:1;display:flex;align-items:baseline;gap:3px}
+.mc-unit{font-size:10px;color:var(--fg3);font-weight:400}
+.mc-time{font-size:10px;color:var(--fg3);margin-top:5px}
+.mc-add{border:0.5px dashed var(--border2);border-radius:12px;padding:13px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:88px;color:var(--fg3);font-size:12px;background:var(--bg3);user-select:none;transition:all 0.15s}
+.mc-add:active{border-color:var(--accent);color:var(--accent)}
+.ri{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.ri:last-child{border-bottom:none}
+.ridot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ribody{flex:1;min-width:0}
+.riname{font-size:13px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rimeta{font-size:11px;color:var(--fg3);margin-top:1px}
+.rival{font-size:14px;font-weight:600;white-space:nowrap}
+.riunit{font-size:10px;color:var(--fg3);margin-left:2px;font-weight:400}
+.badge{font-size:9px;padding:2px 5px;border-radius:4px;margin-left:4px;font-weight:600;vertical-align:middle}
+.bn{background:var(--bg-success);color:var(--fg-success)}
+.bh{background:var(--bg-danger);color:var(--fg-danger)}
+.bl{background:var(--bg-warn);color:var(--fg-warn)}
+.fcard{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:15px;margin-bottom:12px}
+.fc-title{font-size:14px;font-weight:600;color:var(--fg);margin-bottom:13px;display:flex;align-items:center;gap:7px}
+.fld{margin-bottom:11px}
+.fl{display:block;font-size:11px;color:var(--fg2);margin-bottom:4px;font-weight:500}
+.fld input,.fld select,.fld textarea{width:100%;padding:10px 11px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--fg);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent);background:var(--bg2)}
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-primary{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;letter-spacing:-0.1px}
+.btn-primary:active{background:var(--accent2)}
+.errm{font-size:12px;color:var(--fg-danger);margin-top:6px;display:none;padding:8px 10px;background:var(--bg-danger);border-radius:6px}
+.ccard{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.chdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ctitle{font-size:13px;font-weight:600;color:var(--fg)}
+.prow{display:flex;gap:3px}
+.pb{font-size:11px;padding:4px 9px;border:0.5px solid var(--border);background:transparent;color:var(--fg2);border-radius:6px;cursor:pointer;font-family:inherit;transition:all 0.12s}
+.pb.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cw{position:relative;width:100%;height:160px}
+.s3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.st{background:var(--bg3);border-radius:var(--radius);padding:9px;text-align:center}
+.stn{font-size:17px;font-weight:600;color:var(--fg)}
+.stl{font-size:10px;color:var(--fg3);margin-top:2px}
+.hfilt{width:100%;margin-bottom:10px}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--fg3);font-size:13px}
+/* Bottom nav */
+.bnav{
+  display:flex;background:var(--bg2);border-top:0.5px solid var(--border);flex-shrink:0;
+  padding-bottom:calc(6px + var(--safe-b))
+}
+.ntab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 6px;border:none;background:transparent;color:var(--fg3);cursor:pointer;font-size:10px;font-family:inherit;transition:color 0.12s;min-width:0;user-select:none}
+.ntab.on{color:var(--accent)}
+.ntab svg{flex-shrink:0}
+.ntab span{white-space:nowrap;font-size:10px;line-height:1}
+/* Overlay + Drawer */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.overlay.show{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:270px;background:var(--bg2);border-left:0.5px solid var(--border);z-index:101;transform:translateX(100%);transition:transform 0.22s ease;overflow-y:auto;display:flex;flex-direction:column}
+.drawer.show{transform:translateX(0)}
+.dr-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 14px;border-bottom:0.5px solid var(--border);padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.dr-ht{font-size:16px;font-weight:600;color:var(--fg)}
+.dr-close{width:30px;height:30px;border:none;background:var(--bg3);border-radius:50%;cursor:pointer;color:var(--fg2);display:flex;align-items:center;justify-content:center;font-size:16px}
+.dr-sec{padding:12px 14px;border-bottom:0.5px solid var(--border)}
+.dr-sec:last-child{border-bottom:none}
+.dr-sl{font-size:10px;color:var(--fg3);font-weight:600;margin-bottom:10px;letter-spacing:0.5px;text-transform:uppercase}
+.prow-item{display:flex;align-items:center;gap:9px;padding:7px 0;cursor:pointer;user-select:none}
+.prow-av{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0}
+.prow-name{font-size:13px;color:var(--fg);flex:1}
+.pdel{background:transparent;border:none;cursor:pointer;color:var(--fg-danger);padding:4px;line-height:0}
+.add-pr{display:flex;gap:5px;margin-top:9px}
+.add-pr input{flex:1;padding:8px 10px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--fg);font-size:13px;font-family:inherit;outline:none}
+.add-pr input:focus{border-color:var(--accent)}
+.add-pr button{padding:8px 11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:500}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:0.5px solid var(--border)}
+.srow:last-child{border-bottom:none}
+.srow-lbl{font-size:14px;color:var(--fg);display:flex;align-items:center;gap:9px}
+.seg{display:flex;gap:3px}
+.sopt{font-size:11px;padding:5px 10px;border:0.5px solid var(--border);background:transparent;color:var(--fg2);border-radius:6px;cursor:pointer;font-family:inherit;transition:all 0.12s;font-weight:500}
+.sopt.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.dr-link{display:flex;align-items:center;gap:10px;padding:11px 0;color:var(--fg);font-size:13px;cursor:pointer;border-bottom:0.5px solid var(--border);user-select:none}
+.dr-link:last-child{border-bottom:none}
+.dr-link .arr{margin-left:auto;color:var(--fg3);font-size:12px}
+/* Metrics page */
+.mrow{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.mrow:last-child{border-bottom:none}
+.mrow-name{flex:1;font-size:13px;color:var(--fg)}
+.mrow-unit{font-size:11px;color:var(--fg3);margin-right:6px}
+.toggle{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;transition:background 0.18s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle.off{background:var(--border2)}
+.toggle::after{content:'';position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.18s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.toggle.on::after{left:21px}
+.toggle.off::after{left:3px}
+.add-cm{display:grid;grid-template-columns:1fr 90px auto;gap:5px;margin-top:8px}
+.add-cm input{padding:8px 9px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--fg);font-size:12px;font-family:inherit;outline:none}
+.add-cm input:focus{border-color:var(--accent)}
+.add-cm button{padding:8px 10px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500}
+.tsel{width:100%;margin-bottom:10px;padding:9px 11px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--fg);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
+.tsel:focus{border-color:var(--accent)}
+.notif-banner{display:none;background:var(--bg-warn);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--fg-warn);display:flex;align-items:center;gap:8px}
+.notif-banner button{margin-left:auto;padding:4px 9px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap}
+#install-banner{display:none;background:var(--bg-success);border:0.5px solid var(--fg-success);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--fg-success);align-items:center;gap:8px}
+#install-banner button{margin-left:auto;padding:4px 9px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="ov" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="dr-hdr">
+    <span class="dr-ht">Menu</span>
+    <button class="dr-close" onclick="closeDrawer()" aria-label="Close">✕</button>
+  </div>
+  <div class="dr-sec">
+    <div class="dr-sl">Profiles</div>
+    <div id="dr-profiles"></div>
+    <div class="add-pr">
+      <input type="text" id="new-pname" placeholder="New profile name" maxlength="20">
+      <button onclick="addProfile()">Add</button>
+    </div>
+  </div>
+  <div class="dr-sec">
+    <div class="dr-sl">Appearance</div>
+    <div class="srow">
+      <span class="srow-lbl">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Dark mode
+      </span>
+      <div class="seg">
+        <button class="sopt" id="th-dark" onclick="setTheme('dark')">On</button>
+        <button class="sopt" id="th-light" onclick="setTheme('light')">Off</button>
+      </div>
+    </div>
+    <div class="srow">
+      <span class="srow-lbl">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Language
+      </span>
+      <div class="seg">
+        <button class="sopt" id="lang-en" onclick="setLang('en')">EN</button>
+        <button class="sopt" id="lang-bn" onclick="setLang('bn')">বাং</button>
+      </div>
+    </div>
+  </div>
+  <div class="dr-sec">
+    <div class="dr-sl">Notifications</div>
+    <div class="srow">
+      <span class="srow-lbl">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Daily reminder
+      </span>
+      <div class="seg">
+        <button class="sopt" id="notif-on" onclick="enableNotif()">Enable</button>
+        <button class="sopt" id="notif-off" onclick="disableNotif()">Off</button>
+      </div>
+    </div>
+    <div class="srow" id="notif-time-row" style="display:none">
+      <span class="srow-lbl" style="font-size:12px">Reminder time</span>
+      <input type="time" id="notif-time" value="08:00" onchange="saveNotifTime()" style="padding:5px 8px;background:var(--bg3);border:0.5px solid var(--border);border-radius:6px;color:var(--fg);font-family:inherit;font-size:12px;outline:none;width:90px">
+    </div>
+  </div>
+  <div class="dr-sec">
+    <div class="dr-sl">More</div>
+    <div class="dr-link" onclick="exportData()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export data (JSON)
+      <span class="arr">›</span>
+    </div>
+    <div class="dr-link" onclick="clearData()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Clear all data
+      <span class="arr">›</span>
+    </div>
+    <div class="dr-link">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Version 1.0.0
+      <span class="arr" style="font-size:11px;color:var(--fg3)">Health Tracker</span>
+    </div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="tb-left">
+    <div class="profile-pill" onclick="openDrawer()" id="profile-pill">
+      <div class="pav" id="pill-av">S</div>
+      <span class="pname" id="pill-name">Self</span>
+      <span class="chev">▾</span>
+    </div>
+  </div>
+  <span class="tb-center">Health Tracker</span>
+  <div class="tb-right">
+    <button class="ibtn" onclick="openDrawer()" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="page" id="page"></div>
+
+<nav class="bnav" role="navigation" aria-label="Main navigation">
+  <button class="ntab on" id="nt-home" onclick="go('home')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span id="nl-home">Home</span>
+  </button>
+  <button class="ntab" id="nt-log" onclick="go('log')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span id="nl-log">Log</span>
+  </button>
+  <button class="ntab" id="nt-metrics" onclick="go('metrics')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span id="nl-metrics">Metrics</span>
+  </button>
+  <button class="ntab" id="nt-trends" onclick="go('trends')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span id="nl-trends">Trends</span>
+  </button>
+  <button class="ntab" id="nt-history" onclick="go('history')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span id="nl-history">History</span>
+  </button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── METRIC DEFINITIONS ──────────────────────────────────────────
+const BUILT_IN = {
+  bp:         {l:'Blood Pressure',  lb:'রক্তচাপ',         u:'mmHg',  c:'#3b82f6',dual:true, fk:['sys','dia'],fl:['Systolic (mmHg)','Diastolic (mmHg)'],flb:['সিস্টোলিক','ডায়াস্টোলিক'],ph:['120','80'],  nr:{sys:[90,130],dia:[60,85]},fmt:r=>r.sys+'/'+r.dia},
+  weight:     {l:'Weight',          lb:'ওজন',              u:'kg',    c:'#22c55e',dual:false,fk:['val'],fl:['Weight (kg)'],flb:['ওজন (কেজি)'],ph:['70'],nr:null,fmt:r=>r.val},
+  sugar:      {l:'Blood Sugar',     lb:'রক্ত শর্করা',     u:'mg/dL', c:'#f59e0b',dual:false,fk:['val'],fl:['Blood Sugar (mg/dL)'],flb:['রক্ত শর্করা'],ph:['100'],nr:[70,140],fmt:r=>r.val},
+  hr:         {l:'Heart Rate',      lb:'হৃদস্পন্দন',      u:'bpm',   c:'#ef4444',dual:false,fk:['val'],fl:['Heart Rate (bpm)'],flb:['হৃদস্পন্দন'],ph:['72'],nr:[60,100],fmt:r=>r.val},
+  spo2:       {l:'SpO2',            lb:'SpO2',             u:'%',     c:'#8b5cf6',dual:false,fk:['val'],fl:['SpO2 (%)'],flb:['SpO2 (%)'],ph:['98'],nr:[95,100],fmt:r=>r.val},
+  temp:       {l:'Temperature',     lb:'তাপমাত্রা',        u:'°C',    c:'#f97316',dual:false,fk:['val'],fl:['Temperature (°C)'],flb:['তাপমাত্রা'],ph:['36.6'],nr:[36,37.5],fmt:r=>r.val},
+  hba1c:      {l:'HbA1c',           lb:'HbA1c',            u:'%',     c:'#d97706',dual:false,fk:['val'],fl:['HbA1c (%)'],flb:['HbA1c (%)'],ph:['5.4'],nr:[4,5.7],fmt:r=>r.val},
+  tsh:        {l:'Thyroid (TSH)',   lb:'থাইরয়েড (TSH)', u:'mIU/L', c:'#06b6d4',dual:false,fk:['val'],fl:['TSH (mIU/L)'],flb:['TSH (mIU/L)'],ph:['2.5'],nr:[0.4,4.0],fmt:r=>r.val},
+  t3:         {l:'T3',              lb:'T3',               u:'ng/dL', c:'#0891b2',dual:false,fk:['val'],fl:['T3 (ng/dL)'],flb:['T3'],ph:['120'],nr:[80,200],fmt:r=>r.val},
+  t4:         {l:'T4',              lb:'T4',               u:'μg/dL', c:'#0e7490',dual:false,fk:['val'],fl:['T4 (μg/dL)'],flb:['T4'],ph:['8'],nr:[4.5,12.5],fmt:r=>r.val},
+  uricacid:   {l:'Uric Acid',       lb:'ইউরিক অ্যাসিড',  u:'mg/dL', c:'#a855f7',dual:false,fk:['val'],fl:['Uric Acid (mg/dL)'],flb:['ইউরিক অ্যাসিড'],ph:['5'],nr:[3.5,7.2],fmt:r=>r.val},
+  cholesterol:{l:'Cholesterol',     lb:'কোলেস্টেরল',     u:'mg/dL', c:'#ec4899',dual:false,fk:['val'],fl:['Cholesterol (mg/dL)'],flb:['কোলেস্টেরল'],ph:['180'],nr:[0,200],fmt:r=>r.val},
+  ldl:        {l:'LDL',             lb:'LDL',              u:'mg/dL', c:'#f43f5e',dual:false,fk:['val'],fl:['LDL (mg/dL)'],flb:['LDL'],ph:['100'],nr:[0,130],fmt:r=>r.val},
+  hdl:        {l:'HDL',             lb:'HDL',              u:'mg/dL', c:'#10b981',dual:false,fk:['val'],fl:['HDL (mg/dL)'],flb:['HDL'],ph:['55'],nr:[40,80],fmt:r=>r.val},
+  triglyc:    {l:'Triglycerides',   lb:'ট্রাইগ্লিসারাইড',u:'mg/dL', c:'#d946ef',dual:false,fk:['val'],fl:['Triglycerides (mg/dL)'],flb:['ট্রাইগ্লিসারাইড'],ph:['150'],nr:[0,150],fmt:r=>r.val},
+  hemoglobin: {l:'Hemoglobin',      lb:'হিমোগ্লোবিন',    u:'g/dL',  c:'#dc2626',dual:false,fk:['val'],fl:['Hemoglobin (g/dL)'],flb:['হিমোগ্লোবিন'],ph:['13'],nr:[12,17.5],fmt:r=>r.val},
+  creatinine: {l:'Creatinine',      lb:'ক্রিয়েটিনিন',   u:'mg/dL', c:'#7c3aed',dual:false,fk:['val'],fl:['Creatinine (mg/dL)'],flb:['ক্রিয়েটিনিন'],ph:['0.9'],nr:[0.6,1.2],fmt:r=>r.val},
+  sgpt:       {l:'SGPT / ALT',      lb:'SGPT',             u:'U/L',   c:'#ca8a04',dual:false,fk:['val'],fl:['SGPT (U/L)'],flb:['SGPT'],ph:['30'],nr:[7,56],fmt:r=>r.val},
+  sgot:       {l:'SGOT / AST',      lb:'SGOT',             u:'U/L',   c:'#d97706',dual:false,fk:['val'],fl:['SGOT (U/L)'],flb:['SGOT'],ph:['25'],nr:[10,40],fmt:r=>r.val},
+  bilirubin:  {l:'Bilirubin',       lb:'বিলিরুবিন',       u:'mg/dL', c:'#eab308',dual:false,fk:['val'],fl:['Bilirubin (mg/dL)'],flb:['বিলিরুবিন'],ph:['0.8'],nr:[0.1,1.2],fmt:r=>r.val},
+  vitamind:   {l:'Vitamin D',       lb:'ভিটামিন D',       u:'ng/mL', c:'#fbbf24',dual:false,fk:['val'],fl:['Vitamin D (ng/mL)'],flb:['ভিটামিন D'],ph:['40'],nr:[20,50],fmt:r=>r.val},
+  vitaminb12: {l:'Vitamin B12',     lb:'ভিটামিন B12',     u:'pg/mL', c:'#84cc16',dual:false,fk:['val'],fl:['B12 (pg/mL)'],flb:['ভিটামিন B12'],ph:['400'],nr:[200,900],fmt:r=>r.val},
+  calcium:    {l:'Calcium',         lb:'ক্যালসিয়াম',     u:'mg/dL', c:'#94a3b8',dual:false,fk:['val'],fl:['Calcium (mg/dL)'],flb:['ক্যালসিয়াম'],ph:['9.5'],nr:[8.5,10.5],fmt:r=>r.val},
+  iron:       {l:'Iron',            lb:'আয়রন',            u:'μg/dL', c:'#b45309',dual:false,fk:['val'],fl:['Serum Iron (μg/dL)'],flb:['আয়রন'],ph:['100'],nr:[60,170],fmt:r=>r.val},
+};
+
+// ── TRANSLATIONS ────────────────────────────────────────────────
+const T = {
+  en:{home:'Home',log:'Log',metrics:'Metrics',trends:'Trends',history:'History',
+      today:"Today's readings",recent:'Recent entries',add_metric:'Add metric',
+      add_rdg:'Add reading',metric:'Metric',date_time:'Date & time',
+      note:'Note (optional)',note_ph:'e.g. fasting, after meal',save:'Save reading',
+      no_data:'No readings yet. Tap Log to add your first.',
+      filter:'Filter',all:'All metrics',normal:'normal',high:'high',low:'low',
+      min:'Min',avg:'Avg',max:'Max',no_chart:'No data for this period',
+      custom:'Custom metrics',add_custom:'Add a custom metric',
+      cust_name:'Name (e.g. DHEA)',cust_unit:'Unit',no_custom:'None added yet.'},
+  bn:{home:'হোম',log:'লগ',metrics:'মেট্রিক',trends:'ট্রেন্ড',history:'ইতিহাস',
+      today:'আজকের রিডিং',recent:'সাম্প্রতিক এন্ট্রি',add_metric:'মেট্রিক যোগ',
+      add_rdg:'রিডিং যোগ করুন',metric:'মেট্রিক',date_time:'তারিখ ও সময়',
+      note:'নোট (ঐচ্ছিক)',note_ph:'যেমন: খালি পেটে, খাওয়ার পরে',save:'সেভ করুন',
+      no_data:'কোনো রিডিং নেই। লগ ট্যাবে যান।',
+      filter:'ফিল্টার',all:'সব মেট্রিক',normal:'স্বাভাবিক',high:'বেশি',low:'কম',
+      min:'সর্বনিম্ন',avg:'গড়',max:'সর্বোচ্চ',no_chart:'এই সময়ে ডেটা নেই',
+      custom:'কাস্টম মেট্রিক',add_custom:'কাস্টম মেট্রিক যোগ করুন',
+      cust_name:'নাম (যেমন DHEA)',cust_unit:'একক',no_custom:'এখনো কিছু নেই।'},
+};
+
+// ── MOCK DATA ────────────────────────────────────────────────────
+const NOW = Date.now();
+const D = 86400000;
+const MOCK_READINGS = [
+  // BP — spread over ~50 days for all time ranges to work
+  {metric:'bp',ts:NOW-1*D-3600000*2, sys:124,dia:82,note:'morning'},
+  {metric:'bp',ts:NOW-4*D,           sys:119,dia:79,note:''},
+  {metric:'bp',ts:NOW-8*D,           sys:128,dia:84,note:'evening'},
+  {metric:'bp',ts:NOW-15*D,          sys:122,dia:80,note:'morning'},
+  {metric:'bp',ts:NOW-22*D,          sys:135,dia:88,note:'stressed'},
+  {metric:'bp',ts:NOW-30*D,          sys:118,dia:77,note:''},
+  {metric:'bp',ts:NOW-38*D,          sys:126,dia:83,note:'after walk'},
+  {metric:'bp',ts:NOW-50*D,          sys:121,dia:79,note:'morning'},
+  // Weight
+  {metric:'weight',ts:NOW-2*D,       val:72.4,note:''},
+  {metric:'weight',ts:NOW-9*D,       val:72.8,note:''},
+  {metric:'weight',ts:NOW-16*D,      val:73.2,note:''},
+  {metric:'weight',ts:NOW-23*D,      val:73.5,note:'gym day'},
+  {metric:'weight',ts:NOW-31*D,      val:74.0,note:''},
+  {metric:'weight',ts:NOW-45*D,      val:74.3,note:''},
+  // Blood Sugar
+  {metric:'sugar',ts:NOW-1*D,        val:98, note:'fasting'},
+  {metric:'sugar',ts:NOW-3*D,        val:142,note:'after meal'},
+  {metric:'sugar',ts:NOW-10*D,       val:104,note:'fasting'},
+  {metric:'sugar',ts:NOW-18*D,       val:138,note:'after meal'},
+  {metric:'sugar',ts:NOW-26*D,       val:96, note:'fasting'},
+  // Heart Rate
+  {metric:'hr',ts:NOW-1*D,           val:74,note:'resting'},
+  {metric:'hr',ts:NOW-5*D,           val:88,note:'after walk'},
+  {metric:'hr',ts:NOW-12*D,          val:72,note:'morning'},
+  {metric:'hr',ts:NOW-20*D,          val:91,note:'exercise'},
+];
+
+// ── STATE ────────────────────────────────────────────────────────
+let profiles      = [{id:'default',name:'Self'}];
+let curPid        = 'default';
+let allReadings   = {};
+let activeMetrics = {};
+let customMetrics = {};
+let lang          = 'en';
+let theme         = 'dark';
+let notifEnabled  = false;
+let notifTime     = '08:00';
+let curTab        = 'home';
+let selLogM       = 'bp';
+let selTrendM     = 'bp';
+let trendPeriod   = '7d';
+let mainChart     = null;
+let deferredInstall = null;
+
+// ── HELPERS ──────────────────────────────────────────────────────
+function t(k){ return T[lang][k] || k; }
+function allMX(){
+  const cm = customMetrics[curPid] || [];
+  const extra = {};
+  cm.forEach(m => {
+    extra[m.id] = {l:m.name,lb:m.name,u:m.unit,c:'#64748b',dual:false,
+      fk:['val'],fl:[m.name+' ('+m.unit+')'],flb:[m.name+' ('+m.unit+')'],
+      ph:['0'],nr:null,fmt:r=>r.val,custom:true};
+  });
+  return {...BUILT_IN, ...extra};
+}
+function ml(k){ const m=allMX()[k]; if(!m)return k; return lang==='bn'?m.lb:m.l; }
+function curR(){ return allReadings[curPid] || []; }
+function curA(){ return activeMetrics[curPid] || ['bp','weight']; }
+function ini(n){ return n.slice(0,2).toUpperCase(); }
+function rel(ts){
+  const d = Date.now()-ts;
+  if(d<3600000) return Math.floor(d/60000)+'m ago';
+  if(d<86400000) return Math.floor(d/3600000)+'h ago';
+  return Math.floor(d/86400000)+'d ago';
+}
+function fmtDate(ts){
+  const d=new Date(ts);
+  return d.getDate()+'/'+(d.getMonth()+1)+'/'+(d.getFullYear()%100)+' '+
+         d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+function lastOf(k){ return curR().filter(r=>r.metric===k).sort((a,b)=>b.ts-a.ts)[0]||null; }
+function getStatus(r){
+  const m=allMX()[r.metric]; if(!m||!m.nr)return null;
+  if(m.dual){
+    if(r.sys>m.nr.sys[1]||r.dia>m.nr.dia[1])return'h';
+    if(r.sys<m.nr.sys[0]||r.dia<m.nr.dia[0])return'l';
+    return'n';
+  }
+  const n=Array.isArray(m.nr)?m.nr:m.nr.M||m.nr;
+  if(r.val>n[1])return'h'; if(r.val<n[0])return'l'; return'n';
+}
+function bHtml(r){
+  const s=getStatus(r); if(!s)return'';
+  const lbl={n:t('normal'),h:t('high'),l:t('low')};
+  const cls={n:'bn',h:'bh',l:'bl'};
+  return `<span class="badge ${cls[s]}">${lbl[s]}</span>`;
+}
+
+// ── STORAGE ──────────────────────────────────────────────────────
+function loadState(){
+  try{
+    const raw=localStorage.getItem('ht6_data');
+    if(raw){
+      const d=JSON.parse(raw);
+      profiles=d.profiles||profiles; curPid=d.curPid||curPid;
+      allReadings=d.allReadings||{}; activeMetrics=d.activeMetrics||{};
+      customMetrics=d.customMetrics||{}; lang=d.lang||lang; theme=d.theme||theme;
+      notifEnabled=d.notifEnabled||false; notifTime=d.notifTime||'08:00';
+    } else {
+      allReadings={default:[...MOCK_READINGS]};
+      activeMetrics={default:['bp','weight','sugar','hr']};
+    }
+  }catch(e){
+    allReadings={default:[...MOCK_READINGS]};
+    activeMetrics={default:['bp','weight','sugar','hr']};
+  }
+}
+function saveState(){
+  try{
+    localStorage.setItem('ht6_data',JSON.stringify({profiles,curPid,allReadings,activeMetrics,customMetrics,lang,theme,notifEnabled,notifTime}));
+  }catch(e){}
+}
+
+// ── THEME / LANG ─────────────────────────────────────────────────
+function applyTheme(){
+  document.body.classList.toggle('light', theme==='light');
+  document.getElementById('th-dark').classList.toggle('on', theme==='dark');
+  document.getElementById('th-light').classList.toggle('on', theme==='light');
+  const meta=document.getElementById('theme-color-meta');
+  meta.content=theme==='dark'?'#0f0f0f':'#f5f5f4';
+}
+function setTheme(v){ theme=v; applyTheme(); saveState(); if(mainChart){mainChart.destroy();mainChart=null;} render(); }
+
+function applyLang(){
+  document.getElementById('lang-en').classList.toggle('on', lang==='en');
+  document.getElementById('lang-bn').classList.toggle('on', lang==='bn');
+  document.documentElement.lang = lang==='bn'?'bn':'en';
+  ['home','log','metrics','trends','history'].forEach(k=>{
+    const el=document.getElementById('nl-'+k); if(el)el.textContent=T[lang][k];
+  });
+}
+function setLang(v){ lang=v; applyLang(); saveState(); render(); }
+
+// ── DRAWER ───────────────────────────────────────────────────────
+function openDrawer(){ document.getElementById('drawer').classList.add('show'); document.getElementById('ov').classList.add('show'); }
+function closeDrawer(){ document.getElementById('drawer').classList.remove('show'); document.getElementById('ov').classList.remove('show'); }
+
+function buildDrawerProfiles(){
+  const el=document.getElementById('dr-profiles');
+  el.innerHTML=profiles.map(p=>`
+    <div class="prow-item" onclick="switchProfile('${p.id}')">
+      <div class="prow-av">${ini(p.name)}</div>
+      <span class="prow-name">${p.name}</span>
+      ${p.id===curPid?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      ${profiles.length>1&&p.id!=='default'?`<button class="pdel" onclick="event.stopPropagation();delProfile('${p.id}')" aria-label="Delete ${p.name}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+      </button>`:''}
+    </div>
+  `).join('');
+  const cur=profiles.find(p=>p.id===curPid)||profiles[0];
+  document.getElementById('pill-av').textContent=ini(cur.name);
+  document.getElementById('pill-name').textContent=cur.name;
+}
+
+function switchProfile(id){
+  curPid=id;
+  if(!activeMetrics[id])activeMetrics[id]=['bp','weight'];
+  buildDrawerProfiles(); saveState(); render(); closeDrawer();
+}
+function addProfile(){
+  const inp=document.getElementById('new-pname'); const name=inp.value.trim(); if(!name)return;
+  const id='p'+Date.now(); profiles.push({id,name}); activeMetrics[id]=['bp','weight']; inp.value='';
+  switchProfile(id);
+}
+function delProfile(id){
+  if(!confirm('Delete this profile and all its data?'))return;
+  profiles=profiles.filter(p=>p.id!==id); delete allReadings[id]; delete activeMetrics[id]; delete customMetrics[id];
+  if(curPid===id)curPid=profiles[0].id;
+  buildDrawerProfiles(); saveState(); render();
+}
+
+// ── NOTIFICATIONS ────────────────────────────────────────────────
+async function enableNotif(){
+  if(!('Notification' in window)){alert('Notifications not supported in this browser.');return;}
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){
+    notifEnabled=true; saveState(); updateNotifUI();
+    scheduleNotif();
+    new Notification('Health Tracker', {body:'Daily reminders enabled! You will be reminded to log your readings.',icon:'icons/icon-192.png'});
+  } else {
+    alert('Notification permission denied. Please enable it in your browser settings.');
+  }
+}
+function disableNotif(){ notifEnabled=false; saveState(); updateNotifUI(); }
+function saveNotifTime(){ notifTime=document.getElementById('notif-time').value; saveState(); scheduleNotif(); }
+function updateNotifUI(){
+  document.getElementById('notif-on').classList.toggle('on', notifEnabled);
+  document.getElementById('notif-off').classList.toggle('on', !notifEnabled);
+  const row=document.getElementById('notif-time-row');
+  row.style.display=notifEnabled?'flex':'none';
+  if(notifEnabled)document.getElementById('notif-time').value=notifTime;
+}
+function scheduleNotif(){
+  if(!notifEnabled||!('serviceWorker' in navigator))return;
+  navigator.serviceWorker.ready.then(reg=>{
+    if(reg.active){
+      reg.active.postMessage({type:'SCHEDULE_NOTIF',time:notifTime});
+    }
+  });
+}
+
+// ── EXPORT / CLEAR ───────────────────────────────────────────────
+function exportData(){
+  const data=JSON.stringify({profiles,allReadings,activeMetrics,customMetrics},null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='health-tracker-export-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function clearData(){
+  if(!confirm('Clear ALL data for all profiles? This cannot be undone.'))return;
+  allReadings={}; activeMetrics={default:['bp','weight']}; customMetrics={};
+  profiles=[{id:'default',name:'Self'}]; curPid='default';
+  saveState(); buildDrawerProfiles(); render();
+}
+
+// ── NAV ──────────────────────────────────────────────────────────
+function go(tab){
+  curTab=tab;
+  ['home','log','metrics','trends','history'].forEach(id=>{
+    document.getElementById('nt-'+id).classList.toggle('on', id===tab);
+  });
+  render();
+}
+
+// ── RENDER ROUTER ────────────────────────────────────────────────
+function render(){
+  const c=document.getElementById('page');
+  if(curTab==='home')    renderHome(c);
+  else if(curTab==='log')     renderLog(c);
+  else if(curTab==='metrics') renderMetrics(c);
+  else if(curTab==='trends')  renderTrends(c);
+  else                        renderHistory(c);
+}
+
+// ── HOME ─────────────────────────────────────────────────────────
+function renderHome(c){
+  const MX=allMX(); const active=curA();
+  const cards=active.filter(k=>MX[k]).map(k=>{
+    const m=MX[k]; const last=lastOf(k);
+    const val=last?m.fmt(last):'—'; const when=last?rel(last.ts):'';
+    const s=last?getStatus(last):null;
+    const dot=s?`<span style="width:6px;height:6px;border-radius:50%;display:inline-block;margin-left:3px;flex-shrink:0;background:${s==='h'?'var(--fg-danger)':s==='l'?'var(--fg-warn)':'var(--fg-success)'}"></span>`:'';
+    return `<div class="mc" onclick="quickLog('${k}')">
+      <div class="mc-lbl">${svgFor(k,m.c)} ${ml(k)}${dot}</div>
+      <div class="mc-val" style="color:${m.c}">${val}${val!=='—'?`<span class="mc-unit">${m.u}</span>`:''}</div>
+      <div class="mc-time">${when}</div>
+    </div>`;
+  }).join('');
+  const addCard=`<div class="mc-add" onclick="go('metrics')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>${t('add_metric')}</span>
+  </div>`;
+  const recent=curR().slice().sort((a,b)=>b.ts-a.ts).slice(0,5).map(r=>{
+    const m=MX[r.metric]; if(!m)return'';
+    return `<div class="ri">
+      <div class="ridot" style="background:${m.c}"></div>
+      <div class="ribody">
+        <div class="riname">${ml(r.metric)}${bHtml(r)}</div>
+        <div class="rimeta">${fmtDate(r.ts)}${r.note?' · '+r.note:''}</div>
+      </div>
+      <div class="rival" style="color:${m.c}">${m.fmt(r)}<span class="riunit">${m.u}</span></div>
+    </div>`;
+  }).join('');
+  c.innerHTML=`
+    <div id="install-banner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Install app for the best experience
+      <button onclick="installApp()">Install</button>
+    </div>
+    <div class="slabel">${t('today')}</div>
+    <div class="mgrid">${cards}${addCard}</div>
+    ${recent?`<div class="slabel">${t('recent')}</div><div>${recent}</div>`:'<div class="empty">${t("no_data")}</div>'}
+  `;
+  if(deferredInstall) document.getElementById('install-banner').style.display='flex';
+}
+function quickLog(k){ selLogM=k; go('log'); }
+
+// ── ICON SVG HELPER ──────────────────────────────────────────────
+function svgFor(k, color){
+  const paths = {
+    bp:`<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
+    weight:`<path d="M6.5 6.5h11"/><path d="M17 6.5c0-2.76-2.24-5-5-5s-5 2.24-5 5"/><rect x="2" y="6.5" width="20" height="15" rx="2"/>`,
+    sugar:`<path d="M12 2v20M2 12h20"/>`,
+    hr:`<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`,
+    default:`<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>`
+  };
+  const p=paths[k]||paths.default;
+  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+}
+
+// ── LOG ──────────────────────────────────────────────────────────
+function setDefTime(){
+  const el=document.getElementById('log-time'); if(!el)return;
+  const now=new Date();
+  el.value=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+}
+function renderLog(c){
+  const MX=allMX(); const m=MX[selLogM]||MX['bp'];
+  const opts=Object.entries(MX).map(([k])=>`<option value="${k}"${k===selLogM?' selected':''}>${ml(k)}</option>`).join('');
+  const fl=lang==='bn'?m.flb:m.fl;
+  const fields=m.dual
+    ?`<div class="dual">${m.fk.map((f,i)=>`<div class="fld"><label class="fl">${fl[i]}</label><input type="number" id="f-${f}" placeholder="${m.ph[i]}" step="0.1" inputmode="decimal"></div>`).join('')}</div>`
+    :`<div class="fld"><label class="fl">${fl[0]}</label><input type="number" id="f-${m.fk[0]}" placeholder="${m.ph[0]}" step="0.1" inputmode="decimal"></div>`;
+  c.innerHTML=`<div class="fcard">
+    <div class="fc-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      ${t('add_rdg')}
+    </div>
+    <div class="fld"><label class="fl">${t('metric')}</label>
+      <select id="log-msel" onchange="selLogM=this.value;renderLog(document.getElementById('page'))">${opts}</select>
+    </div>
+    ${fields}
+    <div class="fld"><label class="fl">${t('date_time')}</label><input type="datetime-local" id="log-time"></div>
+    <div class="fld"><label class="fl">${t('note')}</label><input type="text" id="log-note" placeholder="${t('note_ph')}" maxlength="80"></div>
+    <div class="errm" id="log-err">Please fill in all required fields.</div>
+    <button class="btn-primary" onclick="saveReading()">${t('save')}</button>
+  </div>`;
+  setDefTime();
+}
+function saveReading(){
+  const MX=allMX(); const m=MX[selLogM];
+  const ts=new Date(document.getElementById('log-time').value).getTime()||Date.now();
+  const note=document.getElementById('log-note').value.trim();
+  const err=document.getElementById('log-err');
+  let entry={metric:selLogM,ts,note};
+  if(m.dual){
+    for(const f of m.fk){
+      const v=parseFloat(document.getElementById('f-'+f).value);
+      if(isNaN(v)){err.style.display='block';return;}
+      entry[f]=v;
+    }
+  }else{
+    const v=parseFloat(document.getElementById('f-'+m.fk[0]).value);
+    if(isNaN(v)){err.style.display='block';return;}
+    entry.val=v;
+  }
+  if(!allReadings[curPid])allReadings[curPid]=[];
+  allReadings[curPid].unshift(entry);
+  if(!curA().includes(selLogM)){activeMetrics[curPid]=[...curA(),selLogM];}
+  saveState(); go('home');
+}
+
+// ── METRICS ──────────────────────────────────────────────────────
+function renderMetrics(c){
+  const MX=allMX(); const active=curA();
+  const biRows=Object.entries(BUILT_IN).map(([k,m])=>{
+    const on=active.includes(k);
+    return `<div class="mrow">
+      <span style="width:10px;height:10px;border-radius:50%;background:${m.c};display:inline-block;flex-shrink:0"></span>
+      <span class="mrow-name">${ml(k)}</span>
+      <span class="mrow-unit">${m.u}</span>
+      <button class="toggle ${on?'on':'off'}" onclick="toggleM('${k}')" aria-label="Toggle ${m.l}" aria-pressed="${on}"></button>
+    </div>`;
+  }).join('');
+  const cm=customMetrics[curPid]||[];
+  const cmRows=cm.length?cm.map(m=>`
+    <div class="mrow">
+      <span style="width:10px;height:10px;border-radius:50%;background:#64748b;display:inline-block;flex-shrink:0"></span>
+      <span class="mrow-name">${m.name}</span>
+      <span class="mrow-unit">${m.unit}</span>
+      <button class="toggle ${active.includes(m.id)?'on':'off'}" onclick="toggleM('${m.id}')" aria-label="Toggle ${m.name}" aria-pressed="${active.includes(m.id)}"></button>
+      <button onclick="delCustom('${m.id}')" style="background:transparent;border:none;cursor:pointer;color:var(--fg-danger);margin-left:6px;padding:2px;line-height:0" aria-label="Delete ${m.name}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>`).join(''):`<div style="font-size:12px;color:var(--fg3);padding:8px 0">${t('no_custom')}</div>`;
+  c.innerHTML=`
+    <div class="fcard" style="margin-bottom:10px">
+      <div class="fc-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        All metrics
+      </div>
+      ${biRows}
+    </div>
+    <div class="fcard">
+      <div class="fc-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        ${t('custom')}
+      </div>
+      <div id="cm-list">${cmRows}</div>
+      <div style="font-size:11px;color:var(--fg3);margin:10px 0 6px;font-weight:500">${t('add_custom')}</div>
+      <div class="add-cm">
+        <input type="text" id="cm-name" placeholder="${t('cust_name')}" maxlength="24">
+        <input type="text" id="cm-unit" placeholder="${t('cust_unit')}" maxlength="12">
+        <button onclick="addCustom()">${lang==='bn'?'যোগ':'Add'}</button>
+      </div>
+      <div class="errm" id="cm-err">${lang==='bn'?'নাম ও একক দিন':'Enter name and unit.'}</div>
+    </div>`;
+}
+function toggleM(k){
+  const a=curA();
+  activeMetrics[curPid]=a.includes(k)?a.filter(x=>x!==k):[...a,k];
+  saveState(); if(curTab==='metrics')renderMetrics(document.getElementById('page')); else render();
+}
+function addCustom(){
+  const name=document.getElementById('cm-name').value.trim();
+  const unit=document.getElementById('cm-unit').value.trim();
+  const err=document.getElementById('cm-err');
+  if(!name||!unit){err.style.display='block';return;} err.style.display='none';
+  if(!customMetrics[curPid])customMetrics[curPid]=[];
+  const id='cm_'+Date.now();
+  customMetrics[curPid].push({id,name,unit});
+  activeMetrics[curPid]=[...curA(),id];
+  document.getElementById('cm-name').value=''; document.getElementById('cm-unit').value='';
+  saveState(); renderMetrics(document.getElementById('page'));
+}
+function delCustom(id){
+  customMetrics[curPid]=(customMetrics[curPid]||[]).filter(m=>m.id!==id);
+  activeMetrics[curPid]=curA().filter(k=>k!==id);
+  allReadings[curPid]=(allReadings[curPid]||[]).filter(r=>r.metric!==id);
+  saveState(); renderMetrics(document.getElementById('page'));
+}
+
+// ── TRENDS ───────────────────────────────────────────────────────
+const PERIOD_CONFIGS = {
+  '7d':  {label:'7 days',  days:7,   groupBy:'day'},
+  'W':   {label:'Weekly',  days:28,  groupBy:'week'},
+  'M':   {label:'Monthly', days:90,  groupBy:'month'},
+  'Y':   {label:'Yearly',  days:365, groupBy:'month'},
+};
+
+function renderTrends(c){
+  const MX=allMX();
+  const opts=Object.entries(MX).map(([k])=>`<option value="${k}"${k===selTrendM?' selected':''}>${ml(k)}</option>`).join('');
+  const pBtns=Object.entries(PERIOD_CONFIGS).map(([k,v])=>`<button class="pb${trendPeriod===k?' on':''}" onclick="setPd('${k}',this)">${v.label}</button>`).join('');
+  c.innerHTML=`
+    <select class="tsel" id="t-sel" onchange="selTrendM=this.value;drawChart()">${opts}</select>
+    <div class="ccard">
+      <div class="chdr">
+        <span class="ctitle" id="ct-lbl">${ml(selTrendM)}</span>
+        <div class="prow" id="period-btns">${pBtns}</div>
+      </div>
+      <div class="cw"><canvas id="mainChart" role="img" aria-label="Health trend chart">Trend chart for selected metric.</canvas></div>
+      <div class="s3">
+        <div class="st"><div class="stn" id="s-min">—</div><div class="stl">${t('min')}</div></div>
+        <div class="st"><div class="stn" id="s-avg">—</div><div class="stl">${t('avg')}</div></div>
+        <div class="st"><div class="stn" id="s-max">—</div><div class="stl">${t('max')}</div></div>
+      </div>
+    </div>`;
+  drawChart();
+}
+
+function setPd(p, btn){
+  trendPeriod=p;
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  drawChart();
+}
+
+function groupReadings(data, groupBy){
+  if(groupBy==='day') return data;
+  const groups={};
+  data.forEach(r=>{
+    const d=new Date(r.ts);
+    let key;
+    if(groupBy==='week'){
+      const dow=d.getDay(); const monday=new Date(d); monday.setDate(d.getDate()-dow+1);
+      key=monday.toISOString().slice(0,10);
+    } else {
+      key=d.getFullYear()+'-'+(d.getMonth()+1);
+    }
+    if(!groups[key])groups[key]=[];
+    groups[key].push(r);
+  });
+  return Object.entries(groups).map(([key,items])=>{
+    const base=items[0];
+    if(base.dual){
+      const sys=items.map(i=>i.sys); const dia=items.map(i=>i.dia);
+      return {...base,ts:items[items.length-1].ts,
+        sys:Math.round(sys.reduce((a,b)=>a+b,0)/sys.length),
+        dia:Math.round(dia.reduce((a,b)=>a+b,0)/dia.length)};
+    } else {
+      const vals=items.map(i=>i.val);
+      const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+      return {...base,ts:items[items.length-1].ts,val:parseFloat(avg.toFixed(2))};
+    }
+  }).sort((a,b)=>a.ts-b.ts);
+}
+
+function fmtLabel(ts, groupBy){
+  const d=new Date(ts);
+  if(groupBy==='day')   return d.getDate()+'/'+(d.getMonth()+1);
+  if(groupBy==='week')  return 'W'+Math.ceil(d.getDate()/7)+' '+d.toLocaleString('default',{month:'short'});
+  return d.toLocaleString('default',{month:'short',year:'2-digit'});
+}
+
+function drawChart(){
+  const MX=allMX(); const k=selTrendM; const m=MX[k];
+  const lbl=document.getElementById('ct-lbl'); if(lbl)lbl.textContent=ml(k);
+  const cfg=PERIOD_CONFIGS[trendPeriod];
+  const cutoff=Date.now()-cfg.days*86400000;
+  const raw=curR().filter(r=>r.metric===k&&r.ts>=cutoff).sort((a,b)=>a.ts-b.ts);
+  const data=groupReadings(raw, cfg.groupBy);
+  const isDark=theme==='dark';
+  const gc=isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)';
+  const tc=isDark?'#666':'#888';
+  if(mainChart){mainChart.destroy();mainChart=null;}
+  const canvas=document.getElementById('mainChart'); if(!canvas)return;
+  if(!data.length){
+    ['s-min','s-avg','s-max'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='—';});
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle=tc; ctx.font='13px system-ui'; ctx.textAlign='center';
+    ctx.fillText(t('no_chart'), canvas.width/2, canvas.height/2);
+    return;
+  }
+  const labels=data.map(r=>fmtLabel(r.ts, cfg.groupBy));
+  let datasets,vals;
+  if(m&&m.dual){
+    const sys=data.map(r=>r.sys), dia=data.map(r=>r.dia);
+    datasets=[
+      {label:'Systolic', data:sys, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)', borderWidth:2, pointRadius:3, tension:0.35, fill:false},
+      {label:'Diastolic',data:dia, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.08)',  borderWidth:2, pointRadius:3, tension:0.35, fill:false, borderDash:[4,3]},
+    ]; vals=sys;
+  } else {
+    vals=data.map(r=>r.val);
+    const col=m?m.c:'#64748b';
+    datasets=[{label:ml(k),data:vals,borderColor:col,backgroundColor:col+'18',borderWidth:2,pointRadius:3,tension:0.35,fill:true}];
+  }
+  const dec=['temp','creatinine','bilirubin','uricacid','tsh','t4','hba1c'].includes(k)?1:0;
+  const ss=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v.toFixed(dec);};
+  ss('s-min',Math.min(...vals)); ss('s-avg',vals.reduce((a,b)=>a+b,0)/vals.length); ss('s-max',Math.max(...vals));
+  mainChart=new Chart(canvas,{
+    type:'line', data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:!!(m&&m.dual),labels:{color:tc,font:{size:10},boxWidth:8,usePointStyle:true}},
+        tooltip:{mode:'index',intersect:false}
+      },
+      scales:{
+        x:{grid:{color:gc},ticks:{color:tc,font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:7}},
+        y:{grid:{color:gc},ticks:{color:tc,font:{size:10}},beginAtZero:false}
+      }
+    }
+  });
+}
+
+// ── HISTORY ──────────────────────────────────────────────────────
+function renderHistory(c){
+  const MX=allMX();
+  const opts=`<option value="all">${t('all')}</option>`+Object.entries(MX).map(([k])=>`<option value="${k}">${ml(k)}</option>`).join('');
+  c.innerHTML=`<select class="hfilt" id="h-f" onchange="renderHL()">${opts}</select><div id="h-list"></div>`;
+  renderHL();
+}
+function renderHL(){
+  const MX=allMX(); const fv=document.getElementById('h-f')?.value||'all';
+  let data=[...curR()].sort((a,b)=>b.ts-a.ts);
+  if(fv!=='all') data=data.filter(r=>r.metric===fv);
+  const el=document.getElementById('h-list'); if(!el)return;
+  if(!data.length){el.innerHTML=`<div class="empty">${t('no_data')}</div>`;return;}
+  el.innerHTML=data.slice(0,80).map(r=>{
+    const m=MX[r.metric]; if(!m)return'';
+    return `<div class="ri">
+      <div class="ridot" style="background:${m.c}"></div>
+      <div class="ribody">
+        <div class="riname">${ml(r.metric)}${bHtml(r)}</div>
+        <div class="rimeta">${fmtDate(r.ts)}${r.note?' · '+r.note:''}</div>
+      </div>
+      <div class="rival" style="color:${m.c}">${m.fmt(r)}<span class="riunit">${m.u}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── PWA INSTALL ──────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredInstall=e;
+  const el=document.getElementById('install-banner');
+  if(el)el.style.display='flex';
+});
+function installApp(){
+  if(deferredInstall){ deferredInstall.prompt(); deferredInstall.userChoice.then(()=>{deferredInstall=null;const el=document.getElementById('install-banner');if(el)el.style.display='none';}); }
+}
+
+// ── SERVICE WORKER ───────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    console.log('SW registered:', reg.scope);
+  }).catch(e=>console.warn('SW failed:', e));
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+loadState();
+applyTheme();
+applyLang();
+buildDrawerProfiles();
+updateNotifUI();
+render();
+</script>
+</body>
+</html>
