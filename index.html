@@ -156,9 +156,87 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:va
 .notif-banner button{margin-left:auto;padding:4px 9px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap}
 #install-banner{display:none;background:var(--bg-success);border:0.5px solid var(--fg-success);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--fg-success);align-items:center;gap:8px}
 #install-banner button{margin-left:auto;padding:4px 9px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer}
+/* Auth screen */
+body.auth-locked .page,body.auth-locked .bnav,body.auth-locked .topbar{filter:blur(2px);pointer-events:none;user-select:none}
+.auth-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.auth-card{width:100%;max-width:340px;background:var(--bg2);border:0.5px solid var(--border);border-radius:16px;padding:24px 22px}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px}
+.auth-logo span{font-size:17px;font-weight:700;color:var(--fg);letter-spacing:-0.3px}
+#auth-title{font-size:14px;color:var(--fg2);text-align:center;margin-bottom:18px}
+.auth-switch{text-align:center;font-size:12px;color:var(--fg2);margin-top:14px}
+.auth-switch a{color:var(--accent);font-weight:600;text-decoration:none;margin-left:4px}
+.auth-forgot{display:block;text-align:center;font-size:11px;color:var(--fg3);margin-top:10px;text-decoration:none}
+.auth-forgot:active{color:var(--accent)}
+.auth-loading{position:fixed;inset:0;background:var(--bg);z-index:201;display:flex;align-items:center;justify-content:center}
+.spinner{width:30px;height:30px;border-radius:50%;border:3px solid var(--border2);border-top-color:var(--accent);animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.auth-userline{font-size:11px;color:var(--fg3);padding:2px 0 10px;word-break:break-all}
 </style>
 </head>
 <body>
+
+<!-- ── FIREBASE SDK (v10, modular, via ESM CDN) ───────────────────────
+     Replace firebaseConfig below with YOUR project's config, from:
+     Firebase Console → Project settings → General → Your apps → Web app
+──────────────────────────────────────────────────────────────────── -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    onAuthStateChanged, signOut, sendPasswordResetEmail
+  } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, onSnapshot, enableIndexedDbPersistence
+  } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB62sqiMYIXKMNqQwyUSB3bfXK0ND4Uh8M",
+    authDomain: "health-tracker-9e60f.firebaseapp.com",
+    projectId: "health-tracker-9e60f",
+    storageBucket: "health-tracker-9e60f.firebasestorage.app",
+    messagingSenderId: "555602655476",
+    appId: "1:555602655476:web:958f6eba273234fd7306a1"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const auth = getAuth(fbApp);
+  const db = getFirestore(fbApp);
+  try { enableIndexedDbPersistence(db); } catch(e){ console.warn('Offline persistence unavailable:', e.code||e); }
+
+  window.fbSignUp   = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
+  window.fbSignIn   = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
+  window.fbSignOut  = () => signOut(auth);
+  window.fbReset    = (email) => sendPasswordResetEmail(auth, email);
+  window.fbSaveDoc  = (uid, data) => setDoc(doc(db, 'users', uid), data, { merge:false });
+  window.fbGetDocOnce = (uid) => getDoc(doc(db, 'users', uid));
+  window.fbSubscribeDoc = (uid, cb) => onSnapshot(doc(db, 'users', uid), cb, err => console.warn('Snapshot error:', err));
+
+  onAuthStateChanged(auth, (user) => {
+    if (window.onFirebaseAuthChanged) window.onFirebaseAuthChanged(user);
+  });
+</script>
+
+<div class="auth-loading" id="auth-loading"><div class="spinner"></div></div>
+
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Health Tracker</span>
+    </div>
+    <div id="auth-title">Log in to sync your data</div>
+    <div class="fld"><label class="fl">Email</label><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
+    <div class="fld"><label class="fl">Password</label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <div class="fld" id="auth-confirm-wrap" style="display:none"><label class="fl">Confirm password</label><input type="password" id="auth-confirm" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <div class="errm" id="auth-err"></div>
+    <button class="btn-primary" id="auth-submit-btn" onclick="submitAuth()">Log in</button>
+    <div class="auth-switch">
+      <span id="auth-switch-text">Don't have an account?</span>
+      <a href="javascript:void(0)" onclick="toggleAuthMode()" id="auth-switch-link">Sign up</a>
+    </div>
+    <a href="javascript:void(0)" class="auth-forgot" onclick="forgotPassword()">Forgot password?</a>
+  </div>
+</div>
 
 <div class="overlay" id="ov" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
@@ -212,6 +290,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:va
     <div class="srow" id="notif-time-row" style="display:none">
       <span class="srow-lbl" style="font-size:12px">Reminder time</span>
       <input type="time" id="notif-time" value="08:00" onchange="saveNotifTime()" style="padding:5px 8px;background:var(--bg3);border:0.5px solid var(--border);border-radius:6px;color:var(--fg);font-family:inherit;font-size:12px;outline:none;width:90px">
+    </div>
+  </div>
+  <div class="dr-sec">
+    <div class="dr-sl">Account</div>
+    <div class="auth-userline" id="auth-userline">Signed in</div>
+    <div class="dr-link" onclick="fbSignOutHandler()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign out
+      <span class="arr">›</span>
     </div>
   </div>
   <div class="dr-sec">
@@ -422,30 +509,108 @@ function bHtml(r){
   return `<span class="badge ${cls[s]}">${lbl[s]}</span>`;
 }
 
-// ── STORAGE ──────────────────────────────────────────────────────
-function loadState(){
-  try{
-    const raw=localStorage.getItem('ht6_data');
-    if(raw){
-      const d=JSON.parse(raw);
+// ── STORAGE (Firebase Firestore, synced per account) ─────────────
+let currentUser = null;
+let unsubscribeSnapshot = null;
+let applyingRemote = false; // guards against re-saving while applying an incoming snapshot
+
+function saveState(){
+  if(!currentUser || applyingRemote) return;
+  const payload={profiles,curPid,allReadings,activeMetrics,customMetrics,lang,theme,notifEnabled,notifTime};
+  window.fbSaveDoc(currentUser.uid, payload).catch(e=>console.warn('Save failed:', e));
+}
+
+function subscribeUserData(uid){
+  if(unsubscribeSnapshot) unsubscribeSnapshot();
+  unsubscribeSnapshot = window.fbSubscribeDoc(uid, (snap)=>{
+    applyingRemote = true;
+    if(snap.exists()){
+      const d=snap.data();
       profiles=d.profiles||profiles; curPid=d.curPid||curPid;
       allReadings=d.allReadings||{}; activeMetrics=d.activeMetrics||{};
       customMetrics=d.customMetrics||{}; lang=d.lang||lang; theme=d.theme||theme;
       notifEnabled=d.notifEnabled||false; notifTime=d.notifTime||'08:00';
     } else {
+      // Brand-new account — seed with a starter profile + sample data
+      profiles=[{id:'default',name:'Self'}]; curPid='default';
       allReadings={default:[...MOCK_READINGS]};
       activeMetrics={default:['bp','weight','sugar','hr']};
+      customMetrics={}; lang='en'; theme='dark'; notifEnabled=false; notifTime='08:00';
+      applyingRemote=false;
+      saveState(); // creates the doc for next time
+      applyingRemote=true;
     }
-  }catch(e){
-    allReadings={default:[...MOCK_READINGS]};
-    activeMetrics={default:['bp','weight','sugar','hr']};
+    applyTheme(); applyLang(); buildDrawerProfiles(); updateNotifUI(); render();
+    applyingRemote = false;
+  });
+}
+
+// ── AUTH SCREEN LOGIC ──────────────────────────────────────────
+let authMode='login';
+function toggleAuthMode(){
+  authMode = authMode==='login' ? 'signup' : 'login';
+  document.getElementById('auth-confirm-wrap').style.display = authMode==='signup'?'block':'none';
+  document.getElementById('auth-title').textContent = authMode==='signup' ? 'Create your account' : 'Log in to sync your data';
+  document.getElementById('auth-submit-btn').textContent = authMode==='signup' ? 'Sign up' : 'Log in';
+  document.getElementById('auth-switch-text').textContent = authMode==='signup' ? 'Already have an account?' : "Don't have an account?";
+  document.getElementById('auth-switch-link').textContent = authMode==='signup' ? 'Log in' : 'Sign up';
+  document.getElementById('auth-err').style.display='none';
+}
+function friendlyAuthError(code){
+  const map={
+    'auth/invalid-email':'That email address looks invalid.',
+    'auth/user-not-found':'No account found with that email.',
+    'auth/wrong-password':'Incorrect password.',
+    'auth/invalid-credential':'Incorrect email or password.',
+    'auth/email-already-in-use':'An account with that email already exists.',
+    'auth/weak-password':'Password should be at least 6 characters.',
+    'auth/too-many-requests':'Too many attempts. Please wait and try again.',
+    'auth/network-request-failed':'Network error. Check your connection.'
+  };
+  return map[code] || 'Something went wrong. Please try again.';
+}
+function submitAuth(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-password').value;
+  const err=document.getElementById('auth-err');
+  err.style.display='none';
+  if(!email||!pass){ err.textContent='Please fill in email and password.'; err.style.display='block'; return; }
+  if(authMode==='signup'){
+    const confirm=document.getElementById('auth-confirm').value;
+    if(pass.length<6){ err.textContent='Password should be at least 6 characters.'; err.style.display='block'; return; }
+    if(pass!==confirm){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+    window.fbSignUp(email,pass).catch(e=>{ err.textContent=friendlyAuthError(e.code); err.style.display='block'; });
+  } else {
+    window.fbSignIn(email,pass).catch(e=>{ err.textContent=friendlyAuthError(e.code); err.style.display='block'; });
   }
 }
-function saveState(){
-  try{
-    localStorage.setItem('ht6_data',JSON.stringify({profiles,curPid,allReadings,activeMetrics,customMetrics,lang,theme,notifEnabled,notifTime}));
-  }catch(e){}
+function forgotPassword(){
+  const email=document.getElementById('auth-email').value.trim();
+  if(!email){ alert('Enter your email above first, then tap "Forgot password?" again.'); return; }
+  window.fbReset(email).then(()=>alert('Password reset email sent to '+email)).catch(e=>alert(friendlyAuthError(e.code)));
 }
+function fbSignOutHandler(){
+  if(!confirm('Sign out?')) return;
+  window.fbSignOut().catch(e=>console.warn(e));
+}
+
+// Called by the Firebase module script whenever auth state changes
+window.onFirebaseAuthChanged = function(user){
+  document.getElementById('auth-loading').style.display='none';
+  if(user){
+    currentUser=user;
+    document.getElementById('auth-screen').style.display='none';
+    document.body.classList.remove('auth-locked');
+    document.getElementById('auth-userline').textContent='Signed in as '+user.email;
+    subscribeUserData(user.uid);
+  } else {
+    currentUser=null;
+    if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot=null; }
+    document.getElementById('auth-screen').style.display='flex';
+    document.body.classList.add('auth-locked');
+    closeDrawer();
+  }
+};
 
 // ── THEME / LANG ─────────────────────────────────────────────────
 function applyTheme(){
@@ -915,11 +1080,11 @@ if('serviceWorker' in navigator){
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
-loadState();
+// Apply default theme/lang immediately so the login screen isn't unstyled.
+// Real data (theme, lang, readings, profiles) loads once Firebase confirms
+// the signed-in user and the Firestore subscription delivers their doc.
 applyTheme();
 applyLang();
-buildDrawerProfiles();
-updateNotifUI();
 render();
 </script>
 </body>
