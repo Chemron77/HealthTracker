@@ -10,7 +10,10 @@ const PRECACHE_URLS = [
   './icons/icon-512.png',
   './icons/icon-maskable-192.png',
   './icons/icon-maskable-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
+  'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js',
+  'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js'
 ];
 
 // ── INSTALL: pre-cache app shell ────────────────────────────────
