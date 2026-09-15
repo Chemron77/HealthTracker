@@ -161,6 +161,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:va
 .demo-banner{display:flex;align-items:center;gap:8px;background:var(--bg-warn);border:0.5px solid var(--fg-warn);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;font-size:13px;color:var(--fg-warn)}
 .demo-banner button{padding:4px 9px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .demo-banner .demo-x{background:transparent;color:var(--fg-warn);padding:2px 4px;font-size:14px;margin-left:2px}
+/* Per-metric detail view */
+.detail-back{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--fg2);margin-bottom:14px;cursor:pointer;user-select:none}
+.detail-hdr{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.detail-hdr-icon{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.detail-hdr-txt{flex:1;min-width:0}
+.detail-title{font-size:18px;font-weight:700;color:var(--fg)}
+.detail-sub{font-size:12px;color:var(--fg3);margin-top:2px}
+.detail-add{width:38px;height:38px;border-radius:50%;border:none;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.detail-add:active{background:var(--accent2)}
+/* Delete button on record rows */
+.ri-del{background:transparent;border:none;color:var(--fg3);cursor:pointer;padding:5px;margin-left:2px;flex-shrink:0;display:flex;align-items:center;border-radius:6px}
+.ri-del:active{color:var(--fg-danger);background:var(--bg-danger)}
 /* Auth screen */
 body.auth-locked .page,body.auth-locked .bnav,body.auth-locked .topbar{filter:blur(2px);pointer-events:none;user-select:none}
 .auth-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
@@ -188,7 +200,7 @@ body.auth-locked .page,body.auth-locked .bnav,body.auth-locked .topbar{filter:bl
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    onAuthStateChanged, signOut, sendPasswordResetEmail
+    onAuthStateChanged, signOut, sendPasswordResetEmail, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
   import {
     getFirestore, doc, setDoc, getDoc, onSnapshot, enableIndexedDbPersistence
@@ -212,6 +224,7 @@ body.auth-locked .page,body.auth-locked .bnav,body.auth-locked .topbar{filter:bl
   window.fbSignIn   = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
   window.fbSignOut  = () => signOut(auth);
   window.fbReset    = (email) => sendPasswordResetEmail(auth, email);
+  window.fbUpdateProfile = (user, data) => updateProfile(user, data);
   window.fbSaveDoc  = (uid, data) => setDoc(doc(db, 'users', uid), data, { merge:false });
   window.fbGetDocOnce = (uid) => getDoc(doc(db, 'users', uid));
   window.fbSubscribeDoc = (uid, cb) => onSnapshot(doc(db, 'users', uid), cb, err => console.warn('Snapshot error:', err));
@@ -230,9 +243,22 @@ body.auth-locked .page,body.auth-locked .bnav,body.auth-locked .topbar{filter:bl
       <span>Health Tracker</span>
     </div>
     <div id="auth-title">Log in to sync your data</div>
-    <div class="fld"><label class="fl">Email</label><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
-    <div class="fld"><label class="fl">Password</label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
-    <div class="fld" id="auth-confirm-wrap" style="display:none"><label class="fl">Confirm password</label><input type="password" id="auth-confirm" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <div class="fld" id="auth-fullname-wrap" style="display:none"><label class="fl">Full Name *</label><input type="text" id="auth-fullname" placeholder="Jane Doe" autocomplete="name"></div>
+    <div class="fld"><label class="fl">Email *</label><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
+    <div class="fld"><label class="fl">Password *</label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <div class="fld" id="auth-confirm-wrap" style="display:none"><label class="fl">Confirm password *</label><input type="password" id="auth-confirm" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <div class="dual" id="auth-agegender-wrap" style="display:none">
+      <div class="fld"><label class="fl">Age</label><input type="number" id="auth-age" placeholder="e.g. 32" min="1" max="120"></div>
+      <div class="fld"><label class="fl">Gender</label>
+        <select id="auth-gender">
+          <option value="">Select</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+          <option value="unspecified">Prefer not to say</option>
+        </select>
+      </div>
+    </div>
     <div class="errm" id="auth-err"></div>
     <button class="btn-primary" id="auth-submit-btn" onclick="submitAuth()">Log in</button>
     <div class="auth-switch">
@@ -300,6 +326,7 @@ body.auth-locked .page,body.auth-locked .bnav,body.auth-locked .topbar{filter:bl
   <div class="dr-sec">
     <div class="dr-sl">Account</div>
     <div class="auth-userline" id="auth-userline">Signed in</div>
+    <div class="auth-userline" id="auth-userline2" style="display:none"></div>
     <div class="dr-link" onclick="fbSignOutHandler()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Sign out
@@ -452,6 +479,7 @@ const MOCK_READINGS = [
   {metric:'hr',ts:NOW-12*D,          val:72,note:'morning'},
   {metric:'hr',ts:NOW-20*D,          val:91,note:'exercise'},
 ];
+MOCK_READINGS.forEach((r,i)=>{ r.id='mock_'+i; });
 
 // ── STATE ────────────────────────────────────────────────────────
 let profiles      = [{id:'default',name:'Self'}];
@@ -520,11 +548,24 @@ let currentUser = null;
 let unsubscribeSnapshot = null;
 let applyingRemote = false; // guards against re-saving while applying an incoming snapshot
 let isDemoData = false; // true only until the user clears/dismisses the one-time sample data
+let accountInfo = {fullName:'', age:null, gender:null}; // captured once at registration
 
 function saveState(){
   if(!currentUser || applyingRemote) return;
-  const payload={profiles,curPid,allReadings,activeMetrics,customMetrics,lang,theme,notifEnabled,notifTime,isDemoData};
+  const payload={profiles,curPid,allReadings,activeMetrics,customMetrics,lang,theme,notifEnabled,notifTime,isDemoData,accountInfo};
   window.fbSaveDoc(currentUser.uid, payload).catch(e=>console.warn('Save failed:', e));
+}
+
+function updateAccountLine(){
+  const line1=document.getElementById('auth-userline');
+  const line2=document.getElementById('auth-userline2');
+  if(!line1||!currentUser) return;
+  line1.textContent = accountInfo.fullName ? accountInfo.fullName+' · '+currentUser.email : 'Signed in as '+currentUser.email;
+  const bits=[];
+  if(accountInfo.age) bits.push('Age '+accountInfo.age);
+  const genderLbl={male:'Male',female:'Female',other:'Other',unspecified:'Prefer not to say'};
+  if(accountInfo.gender && genderLbl[accountInfo.gender]) bits.push(genderLbl[accountInfo.gender]);
+  if(bits.length){ line2.textContent=bits.join(' · '); line2.style.display='block'; } else { line2.style.display='none'; }
 }
 
 function subscribeUserData(uid){
@@ -538,6 +579,8 @@ function subscribeUserData(uid){
       customMetrics=d.customMetrics||{}; lang=d.lang||'en'; theme=d.theme||'dark';
       notifEnabled=d.notifEnabled||false; notifTime=d.notifTime||'08:00';
       isDemoData=!!d.isDemoData;
+      accountInfo=d.accountInfo||pendingSignupInfo||accountInfo;
+      pendingSignupInfo=null;
     } else {
       // Brand-new account — default to Dark mode + English, seeded with a
       // starter profile and one-time sample data the user can clear.
@@ -546,20 +589,25 @@ function subscribeUserData(uid){
       activeMetrics={default:['bp','weight','sugar_fasting','sugar_pp','hr']};
       customMetrics={}; lang='en'; theme='dark'; notifEnabled=false; notifTime='08:00';
       isDemoData=true;
+      accountInfo=pendingSignupInfo || {fullName:'', age:null, gender:null};
+      pendingSignupInfo=null;
       applyingRemote=false;
       saveState(); // creates the doc for next time
       applyingRemote=true;
     }
-    applyTheme(); applyLang(); buildDrawerProfiles(); updateNotifUI(); render();
+    applyTheme(); applyLang(); buildDrawerProfiles(); updateNotifUI(); updateAccountLine(); render();
     applyingRemote = false;
   });
 }
 
 // ── AUTH SCREEN LOGIC ──────────────────────────────────────────
 let authMode='login';
+let pendingSignupInfo=null; // {fullName, age, gender} captured at signup, consumed once on first doc creation
 function toggleAuthMode(){
   authMode = authMode==='login' ? 'signup' : 'login';
   document.getElementById('auth-confirm-wrap').style.display = authMode==='signup'?'block':'none';
+  document.getElementById('auth-fullname-wrap').style.display = authMode==='signup'?'block':'none';
+  document.getElementById('auth-agegender-wrap').style.display = authMode==='signup'?'grid':'none';
   document.getElementById('auth-title').textContent = authMode==='signup' ? 'Create your account' : 'Log in to sync your data';
   document.getElementById('auth-submit-btn').textContent = authMode==='signup' ? 'Sign up' : 'Log in';
   document.getElementById('auth-switch-text').textContent = authMode==='signup' ? 'Already have an account?' : "Don't have an account?";
@@ -586,10 +634,19 @@ function submitAuth(){
   err.style.display='none';
   if(!email||!pass){ err.textContent='Please fill in email and password.'; err.style.display='block'; return; }
   if(authMode==='signup'){
+    const fullName=document.getElementById('auth-fullname').value.trim();
+    const ageRaw=document.getElementById('auth-age').value.trim();
+    const gender=document.getElementById('auth-gender').value;
     const confirm=document.getElementById('auth-confirm').value;
+    if(!fullName){ err.textContent='Please enter your full name.'; err.style.display='block'; return; }
     if(pass.length<6){ err.textContent='Password should be at least 6 characters.'; err.style.display='block'; return; }
     if(pass!==confirm){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
-    window.fbSignUp(email,pass).catch(e=>{ err.textContent=friendlyAuthError(e.code); err.style.display='block'; });
+    pendingSignupInfo = { fullName, age: ageRaw?parseInt(ageRaw,10):null, gender: gender||null };
+    window.fbSignUp(email,pass).then(cred=>{
+      if(window.fbUpdateProfile && cred && cred.user){
+        window.fbUpdateProfile(cred.user,{displayName:fullName}).catch(()=>{});
+      }
+    }).catch(e=>{ pendingSignupInfo=null; err.textContent=friendlyAuthError(e.code); err.style.display='block'; });
   } else {
     window.fbSignIn(email,pass).catch(e=>{ err.textContent=friendlyAuthError(e.code); err.style.display='block'; });
   }
@@ -615,6 +672,7 @@ window.onFirebaseAuthChanged = function(user){
     subscribeUserData(user.uid);
   } else {
     currentUser=null;
+    accountInfo={fullName:'',age:null,gender:null};
     if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot=null; }
     document.getElementById('auth-screen').style.display='flex';
     document.body.classList.add('auth-locked');
@@ -753,6 +811,7 @@ function render(){
   else if(curTab==='log')     renderLog(c);
   else if(curTab==='metrics') renderMetrics(c);
   else if(curTab==='trends')  renderTrends(c);
+  else if(curTab==='detail')  renderMetricDetail(c);
   else                        renderHistory(c);
 }
 
@@ -764,7 +823,7 @@ function renderHome(c){
     const val=last?m.fmt(last):'—'; const when=last?rel(last.ts):'';
     const s=last?getStatus(last):null;
     const dot=s?`<span style="width:6px;height:6px;border-radius:50%;display:inline-block;margin-left:3px;flex-shrink:0;background:${s==='h'?'var(--fg-danger)':s==='l'?'var(--fg-warn)':'var(--fg-success)'}"></span>`:'';
-    return `<div class="mc" onclick="quickLog('${k}')">
+    return `<div class="mc" onclick="openMetricDetail('${k}')">
       <div class="mc-lbl">${svgFor(k,m.c)} ${ml(k)}${dot}</div>
       <div class="mc-val" style="color:${m.c}">${val}${val!=='—'?`<span class="mc-unit">${m.u}</span>`:''}</div>
       <div class="mc-time">${when}</div>
@@ -807,8 +866,76 @@ function renderHome(c){
 }
 function quickLog(k){ selLogM=k; go('log'); }
 
+// ── PER-METRIC DETAIL VIEW (opened by tapping a dashboard card) ──
+let detailMetric = 'bp';
+function openMetricDetail(k){ detailMetric=k; curTab='detail'; render(); }
+
+function genId(){ return 'r_'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
+function keyOf(r){ return r.id || (r.metric+'_'+r.ts); } // fallback for any legacy entry without an id
+
+function metricRecordsHTML(k){
+  const MX=allMX(); const m=MX[k]; if(!m) return `<div class="empty">${t('no_data')}</div>`;
+  const data=curR().filter(r=>r.metric===k).sort((a,b)=>b.ts-a.ts);
+  if(!data.length) return `<div class="empty">${t('no_data')}</div>`;
+  return data.map(r=>`
+    <div class="ri">
+      <div class="ridot" style="background:${m.c}"></div>
+      <div class="ribody">
+        <div class="riname">${ml(k)}${bHtml(r)}</div>
+        <div class="rimeta">${fmtDate(r.ts)}${r.note?' · '+r.note:''}</div>
+      </div>
+      <div class="rival" style="color:${m.c}">${m.fmt(r)}<span class="riunit">${m.u}</span></div>
+      <button class="ri-del" onclick="deleteReading('${keyOf(r)}')" aria-label="Delete reading">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function deleteReading(id){
+  if(!confirm(lang==='bn' ? 'এই রিডিং মুছে ফেলবেন?' : 'Delete this reading?')) return;
+  allReadings[curPid] = (allReadings[curPid]||[]).filter(r=>keyOf(r)!==id);
+  saveState();
+  if(curTab==='detail'){ renderMetricDetail(document.getElementById('page')); }
+  else if(curTab==='trends'){ renderTrends(document.getElementById('page')); }
+  else if(curTab==='history'){ renderHL(); }
+  else { render(); }
+}
+
+function renderMetricDetail(c){
+  const MX=allMX(); const k=detailMetric; const m=MX[k];
+  if(!m){ go('home'); return; }
+  const count=curR().filter(r=>r.metric===k).length;
+  c.innerHTML=`
+    <div class="detail-back" onclick="go('home')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      ${lang==='bn'?'হোমে ফিরুন':'Back to Home'}
+    </div>
+    <div class="detail-hdr">
+      <div class="detail-hdr-icon" style="background:${m.c}22">${svgForBig(k,m.c)}</div>
+      <div class="detail-hdr-txt">
+        <div class="detail-title">${ml(k)}</div>
+        <div class="detail-sub">${count} ${lang==='bn'?'টি রেকর্ড':(count===1?'entry':'entries')}</div>
+      </div>
+      <button class="detail-add" onclick="quickLog('${k}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="fcard" style="padding-top:6px;padding-bottom:6px">
+      <div id="detail-list">${metricRecordsHTML(k)}</div>
+    </div>
+  `;
+}
+
 // ── ICON SVG HELPER ──────────────────────────────────────────────
 function svgFor(k, color){
+  const p=iconPathFor(k);
+  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+}
+function svgForBig(k, color){
+  const p=iconPathFor(k);
+  return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+}
+function iconPathFor(k){
   const paths = {
     bp:`<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
     weight:`<path d="M6.5 6.5h11"/><path d="M17 6.5c0-2.76-2.24-5-5-5s-5 2.24-5 5"/><rect x="2" y="6.5" width="20" height="15" rx="2"/>`,
@@ -817,8 +944,7 @@ function svgFor(k, color){
     hr:`<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>`,
     default:`<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>`
   };
-  const p=paths[k]||paths.default;
-  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  return paths[k]||paths.default;
 }
 
 // ── LOG ──────────────────────────────────────────────────────────
@@ -855,7 +981,7 @@ function saveReading(){
   const ts=new Date(document.getElementById('log-time').value).getTime()||Date.now();
   const note=document.getElementById('log-note').value.trim();
   const err=document.getElementById('log-err');
-  let entry={metric:selLogM,ts,note};
+  let entry={id:genId(),metric:selLogM,ts,note};
   if(m.dual){
     for(const f of m.fk){
       const v=parseFloat(document.getElementById('f-'+f).value);
@@ -956,7 +1082,7 @@ function renderTrends(c){
   const opts=Object.entries(MX).map(([k])=>`<option value="${k}"${k===selTrendM?' selected':''}>${ml(k)}</option>`).join('');
   const pBtns=Object.entries(PERIOD_CONFIGS).map(([k,v])=>`<button class="pb${trendPeriod===k?' on':''}" onclick="setPd('${k}',this)">${v.label}</button>`).join('');
   c.innerHTML=`
-    <div class="tsel-wrap"><select class="tsel" id="t-sel" onchange="selTrendM=this.value;drawChart()">${opts}</select></div>
+    <div class="tsel-wrap"><select class="tsel" id="t-sel" onchange="selTrendM=this.value;renderTrends(document.getElementById('page'))">${opts}</select></div>
     <div class="ccard">
       <div class="chdr">
         <span class="ctitle" id="ct-lbl">${ml(selTrendM)}</span>
@@ -968,6 +1094,10 @@ function renderTrends(c){
         <div class="st"><div class="stn" id="s-avg">—</div><div class="stl">${t('avg')}</div></div>
         <div class="st"><div class="stn" id="s-max">—</div><div class="stl">${t('max')}</div></div>
       </div>
+    </div>
+    <div class="ccard">
+      <div class="chdr"><span class="ctitle">${lang==='bn'?'সব রেকর্ড':'All records'}</span></div>
+      <div id="trend-records">${metricRecordsHTML(selTrendM)}</div>
     </div>`;
   drawChart();
 }
@@ -1089,6 +1219,9 @@ function renderHL(){
         <div class="rimeta">${fmtDate(r.ts)}${r.note?' · '+r.note:''}</div>
       </div>
       <div class="rival" style="color:${m.c}">${m.fmt(r)}<span class="riunit">${m.u}</span></div>
+      <button class="ri-del" onclick="deleteReading('${keyOf(r)}')" aria-label="Delete reading">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
     </div>`;
   }).join('');
 }
