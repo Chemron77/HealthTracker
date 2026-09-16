@@ -34,24 +34,25 @@
   --bg-danger:rgba(185,28,28,0.1);--fg-danger:#b91c1c
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:var(--bg)}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--fg);display:flex;flex-direction:column;max-width:430px;margin:0 auto}
+html,body{height:100%;overflow:hidden;background:var(--bg);overscroll-behavior-y:contain}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--fg);display:flex;flex-direction:column;max-width:430px;margin:0 auto;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 .topbar{
   display:flex;align-items:center;padding:12px 14px;
   background:var(--bg2);border-bottom:0.5px solid var(--border);
   flex-shrink:0;position:relative;
   padding-top:calc(12px + env(safe-area-inset-top,0px))
 }
-.tb-left{display:flex;align-items:center}
+.tb-left{display:flex;align-items:center;gap:8px;min-width:0}
 .profile-pill{display:flex;align-items:center;gap:5px;padding:5px 10px 5px 5px;background:var(--bg3);border:0.5px solid var(--border);border-radius:20px;cursor:pointer;user-select:none}
 .pav{width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
 .pname{font-size:15px;font-weight:500;color:var(--fg)}
 .chev{font-size:14px;color:var(--fg3);margin-left:2px}
-.tb-center{position:absolute;left:50%;transform:translateX(-50%);font-size:18px;font-weight:600;color:var(--fg);letter-spacing:-0.2px;pointer-events:none;white-space:nowrap}
-.tb-right{margin-left:auto}
+.tb-title{font-size:18px;font-weight:600;color:var(--fg);letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tb-right{margin-left:auto;flex-shrink:0}
 .ibtn{width:34px;height:34px;border:none;background:transparent;color:var(--fg2);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);font-size:23px}
 .ibtn:active{background:var(--bg3)}
-.page{flex:1;overflow-y:auto;padding:12px 14px 12px;-webkit-overflow-scrolling:touch}
+.page{flex:1;overflow-y:auto;padding:12px 14px 12px;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 .slabel{font-size:14px;color:var(--fg3);font-weight:600;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase}
 .mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px}
 .mc{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:border-color 0.15s;user-select:none;display:flex;flex-direction:column;gap:5px}
@@ -115,7 +116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:va
 /* Overlay + Drawer */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;opacity:0;pointer-events:none;transition:opacity 0.2s}
 .overlay.show{opacity:1;pointer-events:all}
-.drawer{position:fixed;top:0;left:0;bottom:0;width:280px;max-width:calc(100vw - 40px);background:var(--bg2);border-right:0.5px solid var(--border);border-top-right-radius:20px;border-bottom-right-radius:20px;z-index:101;transform:translateX(-100%);transition:transform 0.24s cubic-bezier(.2,.9,.3,1);overflow-y:auto;display:flex;flex-direction:column}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:280px;max-width:calc(100vw - 40px);background:var(--bg2);border-right:0.5px solid var(--border);border-top-right-radius:20px;border-bottom-right-radius:20px;z-index:101;transform:translateX(-100%);transition:transform 0.24s cubic-bezier(.2,.9,.3,1);overflow-y:auto;overscroll-behavior-y:contain;display:flex;flex-direction:column}
 .drawer.show{transform:translateX(0);box-shadow:12px 0 32px rgba(0,0,0,0.38)}
 .dr-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 16px;border-bottom:0.5px solid var(--border);padding-top:calc(18px + env(safe-area-inset-top,0px));border-top-right-radius:20px}
 .dr-ht{font-size:20px;font-weight:700;color:var(--fg);letter-spacing:-0.2px}
@@ -149,13 +150,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:va
 .notif-time-label{font-size:13px;color:var(--fg2);display:flex;align-items:center;gap:7px;font-weight:500}
 .time-input{padding:6px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:7px;color:var(--fg);font-family:inherit;font-size:15px;outline:none;width:104px;transition:border-color 0.12s}
 .time-input:focus{border-color:var(--accent)}
+/* Notification-blocked modal (replaces native alert()) */
+.app-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.18s;box-sizing:border-box}
+.app-modal-overlay.show{opacity:1;pointer-events:all}
+.app-modal{width:100%;max-width:320px;background:var(--bg2);border:0.5px solid var(--border);border-radius:16px;padding:22px 20px;box-shadow:0 20px 50px rgba(0,0,0,0.4);text-align:center;box-sizing:border-box}
+.app-modal-icon{width:46px;height:46px;border-radius:50%;background:var(--bg-warn);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--fg-warn)}
+.app-modal-title{font-size:17px;font-weight:700;color:var(--fg);margin-bottom:8px}
+.app-modal-body{font-size:14px;color:var(--fg2);line-height:1.5;margin-bottom:18px}
+.app-modal-btns{display:flex;gap:8px}
+.app-modal-btn{flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:inherit}
+.app-modal-btn-primary{background:var(--accent);color:#fff}
+.app-modal-btn-primary:active{background:var(--accent2)}
 .dr-link{display:flex;align-items:center;gap:11px;padding:12px 8px;margin:0 -8px;color:var(--fg);font-size:16px;cursor:pointer;border-bottom:0.5px solid var(--border);user-select:none;border-radius:10px;transition:background 0.12s;font-weight:500}
 .dr-link:active{background:var(--bg3)}
 .dr-link:last-child{border-bottom:none}
 .dr-link svg{color:var(--fg2);flex-shrink:0}
 .dr-link .arr{margin-left:auto;color:var(--fg3);font-size:15px}
 /* Profile switcher popover (separate from the main Menu drawer) */
-.profile-menu{position:fixed;top:64px;right:max(14px, env(safe-area-inset-right,0px));left:auto;width:min(260px, calc(100vw - 28px));max-width:calc(100vw - 28px);max-height:70vh;max-height:min(70vh, calc(100dvh - 90px));box-sizing:border-box;overflow-y:auto;background:var(--bg2);border:0.5px solid var(--border);border-radius:16px;box-shadow:0 14px 36px rgba(0,0,0,0.4);z-index:102;opacity:0;transform:translateY(-8px) scale(0.98);pointer-events:none;transition:all 0.16s ease}
+.profile-menu{position:fixed;top:64px;right:max(14px, env(safe-area-inset-right,0px));left:auto;width:min(260px, calc(100vw - 28px));max-width:calc(100vw - 28px);max-height:70vh;max-height:min(70vh, calc(100dvh - 90px));box-sizing:border-box;overflow-y:auto;overscroll-behavior-y:contain;background:var(--bg2);border:0.5px solid var(--border);border-radius:16px;box-shadow:0 14px 36px rgba(0,0,0,0.4);z-index:102;opacity:0;transform:translateY(-8px) scale(0.98);pointer-events:none;transition:all 0.16s ease}
 .profile-menu.show{opacity:1;transform:translateY(0) scale(1);pointer-events:all}
 .pm-title{font-size:14px;color:var(--fg3);font-weight:700;letter-spacing:0.6px;text-transform:uppercase;padding:14px 14px 8px}
 .profile-menu #pm-list{padding:0 14px;min-width:0}
@@ -296,11 +308,24 @@ body.auth-locked .page,body.auth-locked .bnav,body.auth-locked .topbar{filter:bl
 
 <div class="overlay" id="ov" onclick="closeAllPanels()"></div>
 
+<div class="app-modal-overlay" id="notif-modal-overlay" onclick="closeNotifModal()">
+  <div class="app-modal" onclick="event.stopPropagation()">
+    <div class="app-modal-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+    </div>
+    <div class="app-modal-title">Notifications are blocked</div>
+    <div class="app-modal-body" id="notif-modal-body">Notifications are currently disabled for this app.</div>
+    <div class="app-modal-btns">
+      <button class="app-modal-btn app-modal-btn-primary" onclick="closeNotifModal()">Got it</button>
+    </div>
+  </div>
+</div>
+
 <div class="profile-menu" id="profile-menu">
   <div class="pm-title">Profiles</div>
   <div id="pm-list"></div>
   <div class="add-pr">
-    <input type="text" id="new-pname" placeholder="New profile name" maxlength="20">
+    <input type="text" id="new-pname" placeholder="New profile name" maxlength="20" onkeydown="if(event.key==='Enter')addProfile()">
     <button onclick="addProfile()">Add</button>
   </div>
 </div>
@@ -410,8 +435,8 @@ body.auth-locked .page,body.auth-locked .bnav,body.auth-locked .topbar{filter:bl
     <button class="ibtn" onclick="openDrawer()" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
+    <span class="tb-title">Health Tracker</span>
   </div>
-  <span class="tb-center">Health Tracker</span>
   <div class="tb-right">
     <div class="profile-pill" onclick="openProfileMenu()" id="profile-pill">
       <div class="pav" id="pill-av">S</div>
@@ -753,13 +778,37 @@ function applyLang(){
 function setLang(v){ lang=v; applyLang(); saveState(); render(); }
 
 // ── DRAWER + PROFILE MENU ──────────────────────────────────────────
-function openDrawer(){ document.getElementById('drawer').classList.add('show'); document.getElementById('ov').classList.add('show'); }
-function closeDrawer(){ document.getElementById('drawer').classList.remove('show'); document.getElementById('ov').classList.remove('show'); }
-function openProfileMenu(){ buildDrawerProfiles(); document.getElementById('profile-menu').classList.add('show'); document.getElementById('ov').classList.add('show'); }
-function closeProfileMenu(){ document.getElementById('profile-menu').classList.remove('show'); document.getElementById('ov').classList.remove('show'); }
-function openSettingsDrawer(){ closeDrawer(); document.getElementById('settings-drawer').classList.add('show'); document.getElementById('ov').classList.add('show'); }
-function closeSettingsDrawer(){ document.getElementById('settings-drawer').classList.remove('show'); document.getElementById('ov').classList.remove('show'); }
-function closeAllPanels(){ closeDrawer(); closeProfileMenu(); closeSettingsDrawer(); }
+function openDrawer(){ document.getElementById('drawer').classList.add('show'); document.getElementById('ov').classList.add('show'); syncPanelHistory(); }
+function closeDrawer(){ document.getElementById('drawer').classList.remove('show'); document.getElementById('ov').classList.remove('show'); syncPanelHistory(); }
+function openProfileMenu(){ buildDrawerProfiles(); document.getElementById('profile-menu').classList.add('show'); document.getElementById('ov').classList.add('show'); syncPanelHistory(); }
+function closeProfileMenu(){ document.getElementById('profile-menu').classList.remove('show'); document.getElementById('ov').classList.remove('show'); syncPanelHistory(); }
+function openSettingsDrawer(){ closeDrawer(); document.getElementById('settings-drawer').classList.add('show'); document.getElementById('ov').classList.add('show'); syncPanelHistory(); }
+function closeSettingsDrawer(){ document.getElementById('settings-drawer').classList.remove('show'); document.getElementById('ov').classList.remove('show'); syncPanelHistory(); }
+function closeAllPanels(){ closeDrawer(); closeProfileMenu(); closeSettingsDrawer(); closeNotifModal(); }
+
+// ── ANDROID BACK BUTTON: close an open panel instead of leaving the app ──
+let panelHistoryActive=false;
+function anyPanelOpen(){
+  return document.getElementById('drawer').classList.contains('show')
+      || document.getElementById('profile-menu').classList.contains('show')
+      || document.getElementById('settings-drawer').classList.contains('show')
+      || document.getElementById('notif-modal-overlay').classList.contains('show');
+}
+function syncPanelHistory(){
+  const open=anyPanelOpen();
+  if(open && !panelHistoryActive){ panelHistoryActive=true; history.pushState({htPanel:true}, ''); }
+  else if(!open && panelHistoryActive){ panelHistoryActive=false; history.back(); }
+}
+window.addEventListener('popstate', ()=>{
+  if(panelHistoryActive){
+    panelHistoryActive=false;
+    document.getElementById('drawer').classList.remove('show');
+    document.getElementById('profile-menu').classList.remove('show');
+    document.getElementById('settings-drawer').classList.remove('show');
+    document.getElementById('notif-modal-overlay').classList.remove('show');
+    document.getElementById('ov').classList.remove('show');
+  }
+});
 
 function buildDrawerProfiles(){
   const el=document.getElementById('pm-list');
@@ -810,14 +859,20 @@ function delProfile(id){
 
 // ── NOTIFICATIONS ────────────────────────────────────────────────
 async function enableNotif(){
-  if(!('Notification' in window)){alert('Notifications not supported in this browser.');return;}
+  if(!('Notification' in window)){ openNotifModal('unsupported'); return; }
+  if(Notification.permission==='denied'){ openNotifModal('denied'); return; } // never re-prompt once denied
+  if(Notification.permission==='granted'){
+    notifEnabled=true; saveState(); updateNotifUI(); scheduleNotif();
+    return;
+  }
+  // permission === 'default' — only ask now, after the user's explicit tap
   const perm=await Notification.requestPermission();
   if(perm==='granted'){
     notifEnabled=true; saveState(); updateNotifUI();
     scheduleNotif();
     new Notification('Health Tracker', {body:'Daily reminders enabled! You will be reminded to log your readings.',icon:'icons/icon-192.png'});
   } else {
-    alert('Notification permission denied. Please enable it in your browser settings.');
+    openNotifModal('denied');
   }
 }
 function disableNotif(){ notifEnabled=false; saveState(); updateNotifUI(); }
@@ -836,6 +891,22 @@ function scheduleNotif(){
       reg.active.postMessage({type:'SCHEDULE_NOTIF',time:notifTime});
     }
   });
+}
+
+// In-app modal replacing native alert() for blocked/unsupported notifications
+function openNotifModal(reason){
+  const body=document.getElementById('notif-modal-body');
+  if(reason==='unsupported'){
+    body.textContent='This browser does not support notifications. Try a recent version of Chrome on Android for Daily Reminders.';
+  } else {
+    body.textContent="Notifications are currently disabled for this app. To receive Daily Reminders, open your browser's site settings for this page and allow notifications, then come back and tap Enable again.";
+  }
+  document.getElementById('notif-modal-overlay').classList.add('show');
+  syncPanelHistory();
+}
+function closeNotifModal(){
+  document.getElementById('notif-modal-overlay').classList.remove('show');
+  syncPanelHistory();
 }
 
 // ── EXPORT / CLEAR ───────────────────────────────────────────────
@@ -1049,7 +1120,9 @@ function renderLog(c){
   </div>`;
   setDefTime();
 }
+let isSavingReading=false;
 function saveReading(){
+  if(isSavingReading) return;
   const MX=allMX(); const m=MX[selLogM];
   const ts=new Date(document.getElementById('log-time').value).getTime()||Date.now();
   const note=document.getElementById('log-note').value.trim();
@@ -1066,10 +1139,12 @@ function saveReading(){
     if(isNaN(v)){err.style.display='block';return;}
     entry.val=v;
   }
+  isSavingReading=true;
   if(!allReadings[curPid])allReadings[curPid]=[];
   allReadings[curPid].unshift(entry);
   if(!curA().includes(selLogM)){activeMetrics[curPid]=[...curA(),selLogM];}
   saveState(); go('home');
+  isSavingReading=false;
 }
 
 // ── METRICS ──────────────────────────────────────────────────────
@@ -1111,8 +1186,8 @@ function renderMetrics(c){
       <div id="cm-list">${cmRows}</div>
       <div style="font-size:14px;color:var(--fg3);margin:10px 0 6px;font-weight:500">${t('add_custom')}</div>
       <div class="add-cm">
-        <input type="text" id="cm-name" placeholder="${t('cust_name')}" maxlength="24">
-        <input type="text" id="cm-unit" placeholder="${t('cust_unit')}" maxlength="12">
+        <input type="text" id="cm-name" placeholder="${t('cust_name')}" maxlength="24" onkeydown="if(event.key==='Enter')addCustom()">
+        <input type="text" id="cm-unit" placeholder="${t('cust_unit')}" maxlength="12" onkeydown="if(event.key==='Enter')addCustom()">
         <button onclick="addCustom()">${lang==='bn'?'যোগ':'Add'}</button>
       </div>
       <div class="errm" id="cm-err">${lang==='bn'?'নাম ও একক দিন':'Enter name and unit.'}</div>
@@ -1187,35 +1262,40 @@ function groupReadings(data, groupBy){
   const groups={};
   data.forEach(r=>{
     const d=new Date(r.ts);
-    let key;
+    let key, keyTs;
     if(groupBy==='week'){
-      const dow=d.getDay(); const monday=new Date(d); monday.setDate(d.getDate()-dow+1);
-      key=monday.toISOString().slice(0,10);
+      const dow=d.getDay(); const monday=new Date(d); monday.setDate(d.getDate()-dow+1); monday.setHours(0,0,0,0);
+      key=monday.toISOString().slice(0,10); keyTs=monday.getTime();
     } else {
-      key=d.getFullYear()+'-'+(d.getMonth()+1);
+      const first=new Date(d.getFullYear(), d.getMonth(), 1);
+      key=d.getFullYear()+'-'+(d.getMonth()+1); keyTs=first.getTime();
     }
-    if(!groups[key])groups[key]=[];
-    groups[key].push(r);
+    if(!groups[key])groups[key]={items:[],keyTs};
+    groups[key].items.push(r);
   });
-  return Object.entries(groups).map(([key,items])=>{
+  return Object.entries(groups).map(([key,{items,keyTs}])=>{
     const base=items[0];
+    const lastTs=items[items.length-1].ts;
     if(base.dual){
       const sys=items.map(i=>i.sys); const dia=items.map(i=>i.dia);
-      return {...base,ts:items[items.length-1].ts,
+      return {...base,ts:lastTs,groupTs:keyTs,count:items.length,
         sys:Math.round(sys.reduce((a,b)=>a+b,0)/sys.length),
         dia:Math.round(dia.reduce((a,b)=>a+b,0)/dia.length)};
     } else {
       const vals=items.map(i=>i.val);
       const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
-      return {...base,ts:items[items.length-1].ts,val:parseFloat(avg.toFixed(2))};
+      return {...base,ts:lastTs,groupTs:keyTs,count:items.length,val:parseFloat(avg.toFixed(2))};
     }
-  }).sort((a,b)=>a.ts-b.ts);
+  }).sort((a,b)=>a.groupTs-b.groupTs);
 }
 
-function fmtLabel(ts, groupBy){
-  const d=new Date(ts);
-  if(groupBy==='day')   return d.getDate()+'/'+(d.getMonth()+1);
-  if(groupBy==='week')  return 'W'+Math.ceil(d.getDate()/7)+' '+d.toLocaleString('default',{month:'short'});
+function fmtLabel(r, groupBy){
+  if(groupBy==='day'){
+    const d=new Date(r.ts);
+    return d.getDate()+'/'+(d.getMonth()+1);
+  }
+  const d=new Date(r.groupTs!=null?r.groupTs:r.ts);
+  if(groupBy==='week') return d.getDate()+' '+d.toLocaleString('default',{month:'short'});
   return d.toLocaleString('default',{month:'short',year:'2-digit'});
 }
 
@@ -1239,32 +1319,57 @@ function drawChart(){
     ctx.fillText(t('no_chart'), canvas.width/2, canvas.height/2);
     return;
   }
-  const labels=data.map(r=>fmtLabel(r.ts, cfg.groupBy));
+  const labels=data.map(r=>fmtLabel(r, cfg.groupBy));
   let datasets,vals;
   if(m&&m.dual){
     const sys=data.map(r=>r.sys), dia=data.map(r=>r.dia);
     datasets=[
       {label:'Systolic', data:sys, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.08)', borderWidth:2, pointRadius:3, tension:0.35, fill:false},
       {label:'Diastolic',data:dia, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.08)',  borderWidth:2, pointRadius:3, tension:0.35, fill:false, borderDash:[4,3]},
-    ]; vals=sys;
+    ]; vals=[...sys,...dia];
   } else {
     vals=data.map(r=>r.val);
     const col=m?m.c:'#64748b';
     datasets=[{label:ml(k),data:vals,borderColor:col,backgroundColor:col+'18',borderWidth:2,pointRadius:3,tension:0.35,fill:true}];
   }
-  const dec=['temp','creatinine','bilirubin','uricacid','tsh','t4','hba1c'].includes(k)?1:0;
+  const dec=['temp','creatinine','bilirubin','uricacid','tsh','t4','hba1c','weight','calcium'].includes(k)?1:0;
+  const statVals = (m&&m.dual) ? data.map(r=>r.sys) : vals;
   const ss=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v.toFixed(dec);};
-  ss('s-min',Math.min(...vals)); ss('s-avg',vals.reduce((a,b)=>a+b,0)/vals.length); ss('s-max',Math.max(...vals));
+  ss('s-min',Math.min(...statVals)); ss('s-avg',statVals.reduce((a,b)=>a+b,0)/statVals.length); ss('s-max',Math.max(...statVals));
+
+  const dataMin=Math.min(...vals), dataMax=Math.max(...vals);
+  const range=dataMax-dataMin;
+  const pad=range>0 ? range*0.18 : Math.max(dataMax*0.1, 1);
+  const groupBy=cfg.groupBy;
+  const unit=m?m.u:'';
+
   mainChart=new Chart(canvas,{
     type:'line', data:{labels,datasets},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{
         legend:{display:!!(m&&m.dual),labels:{color:tc,font:{size:10},boxWidth:8,usePointStyle:true}},
-        tooltip:{mode:'index',intersect:false}
+        tooltip:{
+          mode:'index',intersect:false,
+          callbacks:{
+            title:(items)=>{
+              if(!items.length) return '';
+              const r=data[items[0].dataIndex];
+              const d=new Date(groupBy==='day'?r.ts:(r.groupTs!=null?r.groupTs:r.ts));
+              const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+              if(groupBy==='day') return dateStr;
+              if(groupBy==='week') return 'Week of '+dateStr;
+              return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+            },
+            label:(item)=>{
+              const suffix = groupBy==='day' ? '' : ' (avg)';
+              return `${item.dataset.label}${suffix}: ${item.formattedValue} ${unit}`;
+            }
+          }
+        }
       },
       scales:{
         x:{grid:{color:gc},ticks:{color:tc,font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:7}},
-        y:{grid:{color:gc},ticks:{color:tc,font:{size:10}},beginAtZero:false}
+        y:{grid:{color:gc},ticks:{color:tc,font:{size:10}},beginAtZero:false,suggestedMin:Math.max(0,dataMin-pad),suggestedMax:dataMax+pad}
       }
     }
   });
