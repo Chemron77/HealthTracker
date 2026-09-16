@@ -1,7 +1,7 @@
 // Health Tracker — Service Worker
 // Handles offline caching and best-effort daily reminder notifications.
 
-const CACHE_NAME = 'health-tracker-v4';
+const CACHE_NAME = 'health-tracker-v5';
 const PRECACHE_URLS = [
   './',
   './index.html',
